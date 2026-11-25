@@ -6,30 +6,99 @@
   <title>Бүрэгхангай Зар - Сумын нэгдсэн мэдээллийн самбар</title>
   <!-- Tailwind CSS (Дизайн хурдан гаргах сан) -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase (Бүх төхөөрөмж хооронд мэдээлэл хуваалцах сан) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     /* Хэвтээ гүйлгэх цэсний scroll bar-ийг нуух */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="bg-gray-100 text-gray-800 pb-16 font-sans">
+<body class="bg-gray-100 text-gray-800 pb-16 font-sans min-h-screen">
 
   <!-- 1. Толгой хэсэг (Header) -->
   <header class="bg-emerald-700 text-white sticky top-0 z-10 shadow-md">
-    <div class="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center">
+    <div class="max-w-3xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-3">
       <div>
         <h1 class="text-xl font-bold tracking-tight">БҮРЭГХАНГАЙ ЗАР</h1>
         <p class="text-xs text-emerald-200">Сумын нэгдсэн мэдээллийн самбар</p>
       </div>
-      <button onclick="openModal()" class="bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold px-4 py-2 rounded-lg text-sm shadow transition cursor-pointer">
-        + Зар оруулах
-      </button>
+      <div id="headerActions" class="hidden items-center gap-2">
+        <div id="authArea" class="flex items-center gap-2">
+          <!-- JavaScript-ээр нэвтэрсэн хэрэглэгчийн мэдээлэл гарна -->
+        </div>
+        <button onclick="openModal()" class="bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold px-4 py-2 rounded-lg text-sm shadow transition cursor-pointer">
+          + Зар оруулах
+        </button>
+      </div>
     </div>
   </header>
 
-  <main class="max-w-3xl mx-auto px-4 mt-5">
-    <!-- 2. Хайлтын хэсэг -->
-    <div class="mb-4">
+  <!-- 2. Эхлээд нэвтрэх / бүртгүүлэх дэлгэц (Нэвтрээгүй үед харагдана) -->
+  <section id="authGate" class="max-w-md mx-auto px-4 mt-10">
+    <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-200">
+      <div class="text-center mb-5">
+        <h2 class="text-xl font-bold text-gray-900">Тавтай морил</h2>
+        <p class="text-sm text-gray-500 mt-1">Зарын мэдээллийг харахын тулд нэвтэрнэ үү эсвэл бүртгүүлнэ үү.</p>
+      </div>
+
+      <!-- Таб шилжүүлэгч -->
+      <div class="grid grid-cols-2 gap-1 bg-gray-100 p-1 rounded-xl mb-4">
+        <button type="button" id="tabLogin" onclick="switchAuthTab('login')" class="py-2 text-sm font-semibold rounded-lg transition cursor-pointer bg-white text-emerald-700 shadow-sm">
+          Нэвтрэх
+        </button>
+        <button type="button" id="tabRegister" onclick="switchAuthTab('register')" class="py-2 text-sm font-semibold rounded-lg transition cursor-pointer text-gray-600 hover:text-gray-900">
+          Бүртгүүлэх
+        </button>
+      </div>
+
+      <!-- Алдааны мессеж -->
+      <div id="authError" class="hidden mb-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-medium"></div>
+
+      <!-- Нэвтрэх форм -->
+      <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Утасны дугаар *</label>
+          <input type="tel" id="loginPhone" required placeholder="88112233" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Нууц үг *</label>
+          <input type="password" id="loginPassword" required placeholder="••••" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
+        </div>
+        <button type="submit" id="loginSubmitBtn" class="w-full py-2.5 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg transition cursor-pointer">
+          Нэвтрэх
+        </button>
+      </form>
+
+      <!-- Бүртгүүлэх форм -->
+      <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-3 hidden">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Таны нэр *</label>
+          <input type="text" id="regName" required placeholder="Жишээ: Б.Болд" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Утасны дугаар *</label>
+          <input type="tel" id="regPhone" required placeholder="88112233" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Нууц үг * (хамгийн багадаа 4 тэмдэгт)</label>
+          <input type="password" id="regPassword" required minlength="4" placeholder="••••" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Нууц үг давтах *</label>
+          <input type="password" id="regPasswordConfirm" required minlength="4" placeholder="••••" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
+        </div>
+        <button type="submit" id="registerSubmitBtn" class="w-full py-2.5 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg transition cursor-pointer">
+          Бүртгүүлэх
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- 3. Үндсэн мэдээлэл (Зөвхөн нэвтэрсний дараа харагдана) -->
+  <main id="mainContent" class="max-w-3xl mx-auto px-4 mt-5 hidden">
+    <!-- Хайлт ба шинэчлэх товч -->
+    <div class="mb-4 flex gap-2">
       <input 
         type="text" 
         id="searchInput" 
@@ -37,21 +106,24 @@
         placeholder="Унаа, өвс, алдуул мал хайх..." 
         class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
       >
+      <button onclick="loadListings()" title="Шинэчлэх" class="px-4 py-3 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 shadow-sm text-sm font-semibold text-emerald-700 whitespace-nowrap cursor-pointer">
+        ↻ Шинэчлэх
+      </button>
     </div>
 
-    <!-- 3. Ангиллын товчнууд -->
+    <!-- Ангиллын товчнууд -->
     <div id="categoryContainer" class="flex gap-2 overflow-x-auto pb-3 mb-4 no-scrollbar">
       <!-- JavaScript-ээр автоматаар үүснэ -->
     </div>
 
-    <!-- 4. Заруудын жагсаалт -->
+    <!-- Заруудын жагсаалт -->
     <div id="listingsContainer" class="space-y-3">
       <!-- JavaScript-ээр зарууд энд орж ирнэ -->
     </div>
   </main>
 
-  <!-- 5. Зар оруулах цонх (Modal) -->
-  <div id="listingModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+  <!-- 4. Зар оруулах цонх (Modal) -->
+  <div id="listingModal" onclick="if(event.target === this) closeModal()" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-bold text-gray-900">Шинэ зар оруулах</h3>
@@ -96,9 +168,11 @@
           <label for="newIsUrgent" class="text-xs font-medium text-gray-700">Яаралтай зар (Дээгүүр онцолж харуулах)</label>
         </div>
 
+        <div id="listingError" class="hidden p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-medium"></div>
+
         <div class="pt-3 flex gap-2 justify-end">
           <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg cursor-pointer">Болих</button>
-          <button type="submit" class="px-5 py-2 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg cursor-pointer">Нийтлэх</button>
+          <button type="submit" id="listingSubmitBtn" class="px-5 py-2 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg cursor-pointer">Нийтлэх</button>
         </div>
       </form>
     </div>
@@ -106,10 +180,27 @@
 
   <!-- JavaScript Логик хэсэг -->
   <script>
+    // =========================================================================
+    // SUPABASE ТОХИРГОО: Бүх төхөөрөмж дээр зар хуваалцахын тулд доорх 2 утгыг бөглөнө үү
+    // =========================================================================
+    const SUPABASE_URL = "https://ixsnccckocqulywctvlv.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_Abw6EF6XLTpAu3zCcYro2g_jmSIRKUS";
+
+    const isCloudEnabled = Boolean(
+      SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase && typeof window.supabase.createClient === "function"
+    );
+    const sb = isCloudEnabled ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
     const CATEGORIES = ["Бүгд", "Унаа, тээвэр", "Мал, ХАА", "Худалдаа, наймаа", "Ажлын байр", "Мэдээ, зарлал"];
+    const STORAGE_KEYS = {
+      listings: "buregkhangai_listings",
+      users: "buregkhangai_users",
+      currentUser: "buregkhangai_current_user"
+    };
+
     let selectedCategory = "Бүгд";
 
-    // Анхны жишээ зарууд
+    // Анхны жишээ зарууд (Зөвхөн Supabase холбогдоогүй үед ашиглагдана)
     const DEFAULT_LISTINGS = [
       {
         id: 1,
@@ -119,6 +210,8 @@
         price: "35,000₮",
         phone: "88112233",
         isPinned: true,
+        authorId: null,
+        authorName: "Админ",
         createdAt: "10 минутын өмнө"
       },
       {
@@ -129,6 +222,8 @@
         price: "Шагналтай",
         phone: "99001122",
         isPinned: true,
+        authorId: null,
+        authorName: "Админ",
         createdAt: "1 цагийн өмнө"
       },
       {
@@ -139,17 +234,146 @@
         price: "12,000₮",
         phone: "95554433",
         isPinned: false,
+        authorId: null,
+        authorName: "Админ",
         createdAt: "Өчигдөр"
       }
     ];
 
-    // Хадгалсан заруудыг унших эсвэл анхны утгыг авах
-    let listings = JSON.parse(localStorage.getItem("buregkhangai_listings")) || DEFAULT_LISTINGS;
+    // Өгөгдөл хадгалах хувьсагчууд
+    let listings = JSON.parse(localStorage.getItem(STORAGE_KEYS.listings)) || DEFAULT_LISTINGS;
+    let users = JSON.parse(localStorage.getItem(STORAGE_KEYS.users)) || [];
+    let currentUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.currentUser)) || null;
+    if (sb && currentUser && currentUser.mode !== "cloud") {
+      currentUser = null;
+      localStorage.removeItem(STORAGE_KEYS.currentUser);
+    }
+
+    // HTML тэмдэгт хамгаалалт (XSS-ээс сэргийлэх)
+    function escapeHtml(text) {
+      return String(text ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    // Огноог уншихад эвтэйхэн текст болгох
+    function formatTimeAgo(isoOrText) {
+      if (!isoOrText) return "";
+      const date = new Date(isoOrText);
+      if (Number.isNaN(date.getTime())) return String(isoOrText);
+      const diffSec = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+      if (diffSec < 60) return "Дөнгөж сая";
+      const diffMin = Math.floor(diffSec / 60);
+      if (diffMin < 60) return `${diffMin} минутын өмнө`;
+      const diffHour = Math.floor(diffMin / 60);
+      if (diffHour < 24) return `${diffHour} цагийн өмнө`;
+      const diffDay = Math.floor(diffHour / 24);
+      return `${diffDay} өдрийн өмнө`;
+    }
+
+    function normalizeListingRow(row) {
+      return {
+        id: row.id,
+        category: row.category,
+        title: row.title,
+        description: row.description || "",
+        price: row.price || "Тохиролцоно",
+        phone: row.phone,
+        isPinned: Boolean(row.is_pinned),
+        authorId: row.author_id,
+        authorName: row.author_name || "Хэрэглэгч",
+        createdAt: formatTimeAgo(row.created_at)
+      };
+    }
+
+    function normalizePhone(raw) {
+      return String(raw || "").replace(/[\s-]+/g, "");
+    }
+
+    // Нууц үг хөрвүүлэх (SHA-256 эсвэл энгийн fallback)
+    async function hashPassword(password) {
+      if (window.crypto && window.crypto.subtle && window.TextEncoder) {
+        const data = new TextEncoder().encode(password);
+        const hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
+        return Array.from(new Uint8Array(hashBuffer))
+          .map(b => b.toString(16).padStart(2, "0"))
+          .join("");
+      }
+      let hash = 0;
+      for (let i = 0; i < password.length; i++) {
+        hash = ((hash << 5) - hash) + password.charCodeAt(i);
+        hash |= 0;
+      }
+      return String(hash);
+    }
+
+    // Заруудыг ачаалах
+    async function loadListings() {
+      if (!currentUser) return;
+      const container = document.getElementById("listingsContainer");
+
+      if (sb) {
+        container.innerHTML = `<div class="text-center py-10 bg-white rounded-xl text-gray-500">Заруудыг ачаалж байна...</div>`;
+        const { data, error } = await sb
+          .from("listings")
+          .select("*")
+          .order("is_pinned", { ascending: false })
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          container.innerHTML = `<div class="text-center py-10 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">Заруудыг татахад алдаа гарлаа: ${escapeHtml(error.message)}</div>`;
+          return;
+        }
+        listings = (data || []).map(normalizeListingRow);
+      } else {
+        listings = JSON.parse(localStorage.getItem(STORAGE_KEYS.listings)) || DEFAULT_LISTINGS;
+      }
+
+      renderListings();
+    }
+
+    // Нэвтэрсэн эсэхээс хамаарч дэлгэцийг шинэчлэх
+    function updateAppView() {
+      const authGate = document.getElementById("authGate");
+      const mainContent = document.getElementById("mainContent");
+      const headerActions = document.getElementById("headerActions");
+      const authArea = document.getElementById("authArea");
+
+      if (currentUser) {
+        authGate.classList.add("hidden");
+        mainContent.classList.remove("hidden");
+        headerActions.classList.remove("hidden");
+        headerActions.classList.add("flex");
+
+        authArea.innerHTML = `
+          <span class="text-xs sm:text-sm bg-emerald-800/80 border border-emerald-500/40 px-3 py-1.5 rounded-lg font-medium">
+            👤 ${escapeHtml(currentUser.name)}
+          </span>
+          <button onclick="logout()" class="text-xs sm:text-sm bg-emerald-800 hover:bg-emerald-900 text-emerald-100 px-3 py-2 rounded-lg transition cursor-pointer">
+            Гарах
+          </button>
+        `;
+
+        renderCategories();
+        loadListings();
+      } else {
+        authGate.classList.remove("hidden");
+        mainContent.classList.add("hidden");
+        headerActions.classList.add("hidden");
+        headerActions.classList.remove("flex");
+        authArea.innerHTML = "";
+        switchAuthTab("login");
+      }
+    }
 
     // Ангиллын товчнуудыг зурах
     function renderCategories() {
       const container = document.getElementById("categoryContainer");
-      container.innerHTML = CATEGORIES.map(cat => `
+      const visibleCategories = [...CATEGORIES, "Миний зарууд"];
+      container.innerHTML = visibleCategories.map(cat => `
         <button 
           onclick="selectCategory('${cat}')"
           class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition cursor-pointer ${
@@ -170,12 +394,17 @@
 
     // Заруудын жагсаалтыг дэлгэцэнд харуулах
     function renderListings() {
+      if (!currentUser) return;
+
       const container = document.getElementById("listingsContainer");
       const searchQuery = document.getElementById("searchInput").value.toLowerCase();
 
       const filtered = listings.filter(item => {
-        const matchCat = selectedCategory === "Бүгд" || item.category === selectedCategory;
-        const matchSearch = item.title.toLowerCase().includes(searchQuery) || item.description.toLowerCase().includes(searchQuery);
+        const matchCat = selectedCategory === "Бүгд"
+          || (selectedCategory === "Миний зарууд" && item.authorId === currentUser.id)
+          || item.category === selectedCategory;
+        const matchSearch = (item.title || "").toLowerCase().includes(searchQuery)
+          || (item.description || "").toLowerCase().includes(searchQuery);
         return matchCat && matchSearch;
       });
 
@@ -187,87 +416,346 @@
         return;
       }
 
-      container.innerHTML = filtered.map(item => `
-        <div class="p-4 rounded-xl bg-white shadow-sm border ${item.isPinned ? 'border-amber-400 bg-amber-50/30' : 'border-gray-200'}">
-          <div class="flex justify-between items-start gap-2 mb-1">
-            <span class="text-xs font-semibold px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
-              ${item.category}
-            </span>
-            <div class="flex items-center gap-2">
-              ${item.isPinned ? '<span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500 text-white">Яаралтай</span>' : ''}
-              <span class="text-xs text-gray-400">${item.createdAt}</span>
-              <button onclick="deleteListing(${item.id})" title="Устгах" class="text-xs text-gray-400 hover:text-red-600 ml-1 cursor-pointer">✕</button>
+      container.innerHTML = filtered.map(item => {
+        const isOwner = item.authorId === currentUser.id;
+        const authorLabel = escapeHtml(item.authorName || "Хэрэглэгч");
+        return `
+          <div class="p-4 rounded-xl bg-white shadow-sm border ${item.isPinned ? 'border-amber-400 bg-amber-50/30' : 'border-gray-200'}">
+            <div class="flex justify-between items-start gap-2 mb-1">
+              <span class="text-xs font-semibold px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                ${escapeHtml(item.category)}
+              </span>
+              <div class="flex items-center gap-2">
+                ${item.isPinned ? '<span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500 text-white">Яаралтай</span>' : ''}
+                <span class="text-xs text-gray-400">${escapeHtml(item.createdAt)}</span>
+                ${isOwner ? `<button onclick="deleteListing(${item.id})" title="Устгах" class="text-xs text-gray-400 hover:text-red-600 ml-1 cursor-pointer">✕</button>` : ''}
+              </div>
+            </div>
+
+            <h2 class="text-base font-bold text-gray-900 mt-1">${escapeHtml(item.title)}</h2>
+            <p class="text-sm text-gray-600 mt-1 leading-relaxed">${escapeHtml(item.description)}</p>
+
+            <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center gap-2">
+              <div>
+                <span class="font-bold text-emerald-700 text-base">${escapeHtml(item.price)}</span>
+                <span class="block text-xs text-gray-400">Нийтэлсэн: ${authorLabel}</span>
+              </div>
+              <a href="tel:+976${escapeHtml(item.phone)}" class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
+                📞 ${escapeHtml(item.phone)}
+              </a>
             </div>
           </div>
+        `;
+      }).join("");
+    }
 
-          <h2 class="text-base font-bold text-gray-900 mt-1">${item.title}</h2>
-          <p class="text-sm text-gray-600 mt-1 leading-relaxed">${item.description}</p>
+    function showListingError(message) {
+      const el = document.getElementById("listingError");
+      el.textContent = message;
+      el.classList.remove("hidden");
+    }
 
-          <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
-            <span class="font-bold text-emerald-700 text-base">${item.price}</span>
-            <a href="tel:+976${item.phone}" class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
-              📞 ${item.phone}
-            </a>
-          </div>
-        </div>
-      `).join("");
+    function hideListingError() {
+      const el = document.getElementById("listingError");
+      el.textContent = "";
+      el.classList.add("hidden");
     }
 
     // Шинэ зар нэмэх
-    function handleAddListing(event) {
+    async function handleAddListing(event) {
       event.preventDefault();
-      
-      const category = document.getElementById("newCategory").value;
-      const title = document.getElementById("newTitle").value;
-      const description = document.getElementById("newDescription").value;
-      const priceInput = document.getElementById("newPrice").value;
-      const phone = document.getElementById("newPhone").value;
-      const isPinned = document.getElementById("newIsUrgent").checked;
+      if (!currentUser) return;
+      hideListingError();
 
-      const newItem = {
-        id: Date.now(),
-        category,
-        title,
-        description,
-        price: priceInput ? `${priceInput}₮` : "Тохиролцоно",
-        phone,
-        isPinned,
-        createdAt: "Дөнгөж сая"
-      };
+      const submitBtn = document.getElementById("listingSubmitBtn");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Хадгалж байна...";
 
-      listings.unshift(newItem);
-      localStorage.setItem("buregkhangai_listings", JSON.stringify(listings));
-      
-      document.getElementById("addListingForm").reset();
-      closeModal();
-      renderListings();
-    }
+      try {
+        const category = document.getElementById("newCategory").value;
+        const title = document.getElementById("newTitle").value.trim();
+        const description = document.getElementById("newDescription").value.trim();
+        const priceInput = document.getElementById("newPrice").value.trim();
+        const price = priceInput ? `${priceInput}₮` : "Тохиролцоно";
+        const phone = normalizePhone(document.getElementById("newPhone").value);
+        const isPinned = document.getElementById("newIsUrgent").checked;
 
-    // Зар устгах
-    function deleteListing(id) {
-      if (confirm("Энэ зарыг устгах уу?")) {
-        listings = listings.filter(item => item.id !== id);
-        localStorage.setItem("buregkhangai_listings", JSON.stringify(listings));
+        if (sb) {
+          const { data, error } = await sb
+            .from("listings")
+            .insert({
+              category,
+              title,
+              description,
+              price,
+              phone,
+              is_pinned: isPinned,
+              author_id: currentUser.id,
+              author_name: currentUser.name
+            })
+            .select()
+            .single();
+
+          if (error) {
+            showListingError(`Зар хадгалахад алдаа гарлаа: ${error.message}`);
+            return;
+          }
+          listings.unshift(normalizeListingRow(data));
+        } else {
+          const newItem = {
+            id: Date.now(),
+            category,
+            title,
+            description,
+            price,
+            phone,
+            isPinned,
+            authorId: currentUser.id,
+            authorName: currentUser.name,
+            createdAt: "Дөнгөж сая"
+          };
+          listings.unshift(newItem);
+          localStorage.setItem(STORAGE_KEYS.listings, JSON.stringify(listings));
+        }
+
+        document.getElementById("addListingForm").reset();
+        closeModal();
         renderListings();
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Нийтлэх";
       }
     }
 
-    // Цонх нээх / хаах
+    // Зар устгах (зөвхөн өөрийн зарыг)
+    async function deleteListing(id) {
+      if (!currentUser) return;
+      const target = listings.find(item => item.id === id);
+      if (!target || target.authorId !== currentUser.id) return;
+
+      if (!confirm("Энэ зарыг устгах уу?")) return;
+
+      if (sb) {
+        const { data, error } = await sb.rpc("delete_own_listing", {
+          p_listing_id: id,
+          p_author_id: currentUser.id
+        });
+        if (error || !data) {
+          alert("Зар устгахад алдаа гарлаа.");
+          return;
+        }
+        listings = listings.filter(item => item.id !== id);
+      } else {
+        listings = listings.filter(item => item.id !== id);
+        localStorage.setItem(STORAGE_KEYS.listings, JSON.stringify(listings));
+      }
+
+      renderListings();
+    }
+
+    // Зар оруулах цонх нээх / хаах
     function openModal() {
+      if (!currentUser) return;
+      hideListingError();
+
+      const phoneField = document.getElementById("newPhone");
+      if (!phoneField.value) {
+        phoneField.value = currentUser.phone;
+      }
       const modal = document.getElementById("listingModal");
       modal.classList.remove("hidden");
       modal.classList.add("flex");
     }
 
     function closeModal() {
+      hideListingError();
       const modal = document.getElementById("listingModal");
       modal.classList.add("hidden");
       modal.classList.remove("flex");
     }
 
+    // Нэвтрэх / Бүртгүүлэх таб шилжүүлэх
+    function switchAuthTab(mode) {
+      hideAuthError();
+      const isLogin = mode === "login";
+      const loginForm = document.getElementById("loginForm");
+      const registerForm = document.getElementById("registerForm");
+      const tabLogin = document.getElementById("tabLogin");
+      const tabRegister = document.getElementById("tabRegister");
+
+      loginForm.classList.toggle("hidden", !isLogin);
+      registerForm.classList.toggle("hidden", isLogin);
+
+      if (isLogin) {
+        tabLogin.className = "py-2 text-sm font-semibold rounded-lg transition cursor-pointer bg-white text-emerald-700 shadow-sm";
+        tabRegister.className = "py-2 text-sm font-semibold rounded-lg transition cursor-pointer text-gray-600 hover:text-gray-900";
+      } else {
+        tabRegister.className = "py-2 text-sm font-semibold rounded-lg transition cursor-pointer bg-white text-emerald-700 shadow-sm";
+        tabLogin.className = "py-2 text-sm font-semibold rounded-lg transition cursor-pointer text-gray-600 hover:text-gray-900";
+      }
+    }
+
+    function showAuthError(message) {
+      const el = document.getElementById("authError");
+      el.textContent = message;
+      el.classList.remove("hidden");
+    }
+
+    function hideAuthError() {
+      const el = document.getElementById("authError");
+      el.textContent = "";
+      el.classList.add("hidden");
+    }
+
+    // Бүртгэл үүсгэх
+    async function handleRegister(event) {
+      event.preventDefault();
+      hideAuthError();
+
+      const name = document.getElementById("regName").value.trim();
+      const phone = normalizePhone(document.getElementById("regPhone").value);
+      const password = document.getElementById("regPassword").value;
+      const confirmPassword = document.getElementById("regPasswordConfirm").value;
+
+      if (!name) {
+        showAuthError("Нэрээ оруулна уу.");
+        return;
+      }
+      if (!/^\d{6,12}$/.test(phone)) {
+        showAuthError("Утасны дугаараа зөв оруулна уу (зөвхөн цифр, жишээ нь 88112233).");
+        return;
+      }
+      if (password.length < 4) {
+        showAuthError("Нууц үг хамгийн багадаа 4 тэмдэгт байх ёстой.");
+        return;
+      }
+      if (password !== confirmPassword) {
+        showAuthError("Хоёр нууц үг таарахгүй байна.");
+        return;
+      }
+
+      const submitBtn = document.getElementById("registerSubmitBtn");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Бүртгэж байна...";
+
+      try {
+        const passwordHash = await hashPassword(password);
+
+        if (sb) {
+          const { data, error } = await sb.rpc("register_user", {
+            p_name: name,
+            p_phone: phone,
+            p_password_hash: passwordHash
+          });
+
+          if (error) {
+            if (error.code === "23505" || String(error.message).toLowerCase().includes("duplicate")) {
+              showAuthError("Энэ утасны дугаар аль хэдийн бүртгэгдсэн байна. Нэвтрэх хэсгээр орно уу.");
+            } else {
+              showAuthError(`Бүртгүүлэхэд алдаа гарлаа: ${error.message}`);
+            }
+            return;
+          }
+
+          document.getElementById("registerForm").reset();
+          completeLogin(data);
+        } else {
+          if (users.some(u => u.phone === phone)) {
+            showAuthError("Энэ утасны дугаар аль хэдийн бүртгэгдсэн байна. Нэвтрэх хэсгээр орно уу.");
+            return;
+          }
+          const newUser = {
+            id: Date.now(),
+            name,
+            phone,
+            passwordHash,
+            createdAt: new Date().toISOString()
+          };
+          users.push(newUser);
+          localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(users));
+
+          document.getElementById("registerForm").reset();
+          completeLogin(newUser);
+        }
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Бүртгүүлэх";
+      }
+    }
+
+    // Нэвтрэх
+    async function handleLogin(event) {
+      event.preventDefault();
+      hideAuthError();
+
+      const phone = normalizePhone(document.getElementById("loginPhone").value);
+      const password = document.getElementById("loginPassword").value;
+
+      const submitBtn = document.getElementById("loginSubmitBtn");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Нэвтэрч байна...";
+
+      try {
+        const passwordHash = await hashPassword(password);
+
+        if (sb) {
+          const { data, error } = await sb.rpc("login_user", {
+            p_phone: phone,
+            p_password_hash: passwordHash
+          });
+
+          if (error) {
+            showAuthError(`Нэвтрэхэд алдаа гарлаа: ${error.message}`);
+            return;
+          }
+          if (!data) {
+            showAuthError("Утасны дугаар эсвэл нууц үг буруу байна.");
+            return;
+          }
+
+          document.getElementById("loginForm").reset();
+          completeLogin(data);
+        } else {
+          const user = users.find(u => u.phone === phone);
+          if (!user || user.passwordHash !== passwordHash) {
+            showAuthError("Утасны дугаар эсвэл нууц үг буруу байна.");
+            return;
+          }
+
+          document.getElementById("loginForm").reset();
+          completeLogin(user);
+        }
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Нэвтрэх";
+      }
+    }
+
+    function completeLogin(user) {
+      currentUser = { id: user.id, name: user.name, phone: user.phone, mode: sb ? "cloud" : "local" };
+      localStorage.setItem(STORAGE_KEYS.currentUser, JSON.stringify(currentUser));
+      updateAppView();
+    }
+
+    function logout() {
+      currentUser = null;
+      localStorage.removeItem(STORAGE_KEYS.currentUser);
+      closeModal();
+      document.getElementById("addListingForm").reset();
+      document.getElementById("searchInput").value = "";
+      selectedCategory = "Бүгд";
+      updateAppView();
+    }
+
+    // Escape товчоор зар оруулах цонхыг хаах
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeModal();
+      }
+    });
+
     // Хуудас ачаалахад ажиллах
-    renderCategories();
-    renderListings();
+    updateAppView();
   </script>
 </body>
 </html>
