@@ -163,6 +163,23 @@
           </div>
         </div>
 
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Зарын хугацаа (хэзээ хүртэл идэвхтэй байх)</label>
+          <div class="grid grid-cols-2 gap-2">
+            <select id="newExpiryPreset" onchange="applyExpiryPreset()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+              <option value="">— Хугацаа сонгох —</option>
+              <option value="1">1 өдөр</option>
+              <option value="3">3 өдөр</option>
+              <option value="7">7 өдөр</option>
+              <option value="14">14 өдөр</option>
+              <option value="30">30 өдөр</option>
+              <option value="custom">Өөрөө тохируулах</option>
+            </select>
+            <input type="date" id="newExpiryDate" class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600">
+          </div>
+          <p class="text-[11px] text-gray-400 mt-1">Хугацаа дууссан зарууд автоматаар нуугдана. Хоосон орхивол 30 хоног идэвхтэй байна.</p>
+        </div>
+
         <div class="flex items-center gap-2 pt-1">
           <input type="checkbox" id="newIsUrgent" class="w-4 h-4 text-emerald-600 rounded">
           <label for="newIsUrgent" class="text-xs font-medium text-gray-700">Яаралтай зар (Дээгүүр онцолж харуулах)</label>
@@ -285,12 +302,41 @@
         isPinned: Boolean(row.is_pinned),
         authorId: row.author_id,
         authorName: row.author_name || "Хэрэглэгч",
-        createdAt: formatTimeAgo(row.created_at)
+        createdAt: formatTimeAgo(row.created_at),
+        expiresAt: row.expires_at || null
       };
     }
 
     function normalizePhone(raw) {
       return String(raw || "").replace(/[\s-]+/g, "");
+    }
+
+    // Хугацааны preset сонгоход автоматаар огноо тооцоолох
+    function applyExpiryPreset() {
+      const preset = document.getElementById("newExpiryPreset").value;
+      const dateInput = document.getElementById("newExpiryDate");
+      if (!preset || preset === "custom") { dateInput.value = ""; return; }
+      const d = new Date();
+      d.setDate(d.getDate() + parseInt(preset));
+      dateInput.value = d.toISOString().split("T")[0];
+    }
+
+    // Хугацаа дууссан эсэхийг шалгах
+    function isExpired(expiresAt) {
+      if (!expiresAt) return false;
+      return new Date(expiresAt) < new Date();
+    }
+
+    // Хугацааг харуулах текст
+    function formatExpiry(expiresAt) {
+      if (!expiresAt) return null;
+      const exp = new Date(expiresAt);
+      if (isExpired(expiresAt)) return "⛔ Хугацаа дууссан";
+      const diffMs = exp - Date.now();
+      const diffDays = Math.ceil(diffMs / 86400000);
+      if (diffDays <= 0) return "⚠️ Өнөөдөр дуусна";
+      if (diffDays === 1) return "⚠️ Маргааш дуусна";
+      return `📅 ${diffDays} өдөр үлдсэн`;
     }
 
     // Нууц үг хөрвүүлэх (SHA-256 эсвэл энгийн fallback)
@@ -406,7 +452,9 @@
           || item.category === selectedCategory;
         const matchSearch = (item.title || "").toLowerCase().includes(searchQuery)
           || (item.description || "").toLowerCase().includes(searchQuery);
-        return matchCat && matchSearch;
+        const canDelete = item.authorId === currentUser.id || Boolean(currentUser.isAdmin);
+        const notExpired = !isExpired(item.expiresAt) || canDelete;
+        return matchCat && matchSearch && notExpired;
       });
 
       // Яаралтай зарыг дээр нь эрэмбэлэх
@@ -429,6 +477,7 @@
               <div class="flex items-center gap-2">
                 ${item.isPinned ? '<span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500 text-white">Яаралтай</span>' : ''}
                 <span class="text-xs text-gray-400">${escapeHtml(item.createdAt)}</span>
+                ${item.expiresAt ? `<span class="text-xs font-medium ${isExpired(item.expiresAt) ? 'text-red-500' : 'text-blue-500'}">${formatExpiry(item.expiresAt)}</span>` : ''}
                 ${canDelete ? `<button onclick="deleteListing(${item.id})" title="Устгах" class="text-xs text-gray-400 hover:text-red-600 ml-1 cursor-pointer">✕</button>` : ''}
               </div>
             </div>
@@ -480,6 +529,10 @@
         const price = priceInput ? `${priceInput}₮` : "Тохиролцоно";
         const phone = normalizePhone(document.getElementById("newPhone").value);
         const isPinned = document.getElementById("newIsUrgent").checked;
+        const expiryDateVal = document.getElementById("newExpiryDate").value;
+        const expiresAt = expiryDateVal
+          ? new Date(expiryDateVal + "T23:59:59").toISOString()
+          : new Date(Date.now() + 30 * 86400000).toISOString();
 
         if (sb) {
           const { data, error } = await sb
@@ -492,7 +545,8 @@
               phone,
               is_pinned: isPinned,
               author_id: currentUser.id,
-              author_name: currentUser.name
+              author_name: currentUser.name,
+              expires_at: expiresAt
             })
             .select()
             .single();
@@ -513,7 +567,8 @@
             isPinned,
             authorId: currentUser.id,
             authorName: currentUser.name,
-            createdAt: "Дөнгөж сая"
+            createdAt: "Дөнгөж сая",
+            expiresAt
           };
           listings.unshift(newItem);
           localStorage.setItem(STORAGE_KEYS.listings, JSON.stringify(listings));
@@ -573,6 +628,8 @@
       const modal = document.getElementById("listingModal");
       modal.classList.add("hidden");
       modal.classList.remove("flex");
+      document.getElementById("newExpiryPreset").value = "";
+      document.getElementById("newExpiryDate").value = "";
     }
 
     // Нэвтрэх / Бүртгүүлэх таб шилжүүлэх
