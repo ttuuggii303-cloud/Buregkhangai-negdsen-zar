@@ -198,7 +198,7 @@
   <!-- JavaScript Логик хэсэг -->
   <script>
     // =========================================================================
-    // SUPABASE ТОХИРГОО: Бүх төхөөрөмж дээр зар хуваалцахын тулд доорх 2 утгыг бөглөнө үү
+    // SUPABASE ТОХИРГОО
     // =========================================================================
     const SUPABASE_URL = "https://ixsnccckocqulywctvlv.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_Abw6EF6XLTpAu3zCcYro2g_jmSIRKUS";
@@ -217,7 +217,6 @@
 
     let selectedCategory = "Бүгд";
 
-    // Анхны жишээ зарууд (Зөвхөн Supabase холбогдоогүй үед ашиглагдана)
     const DEFAULT_LISTINGS = [
       {
         id: 1,
@@ -257,7 +256,6 @@
       }
     ];
 
-    // Өгөгдөл хадгалах хувьсагчууд
     let listings = JSON.parse(localStorage.getItem(STORAGE_KEYS.listings)) || DEFAULT_LISTINGS;
     let users = JSON.parse(localStorage.getItem(STORAGE_KEYS.users)) || [];
     let currentUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.currentUser)) || null;
@@ -266,7 +264,6 @@
       localStorage.removeItem(STORAGE_KEYS.currentUser);
     }
 
-    // HTML тэмдэгт хамгаалалт (XSS-ээс сэргийлэх)
     function escapeHtml(text) {
       return String(text ?? "")
         .replace(/&/g, "&amp;")
@@ -276,7 +273,6 @@
         .replace(/'/g, "&#39;");
     }
 
-    // Огноог уншихад эвтэйхэн текст болгох
     function formatTimeAgo(isoOrText) {
       if (!isoOrText) return "";
       const date = new Date(isoOrText);
@@ -311,7 +307,6 @@
       return String(raw || "").replace(/[\s-]+/g, "");
     }
 
-    // Хугацааны preset сонгоход автоматаар огноо тооцоолох
     function applyExpiryPreset() {
       const preset = document.getElementById("newExpiryPreset").value;
       const dateInput = document.getElementById("newExpiryDate");
@@ -321,13 +316,11 @@
       dateInput.value = d.toISOString().split("T")[0];
     }
 
-    // Хугацаа дууссан эсэхийг шалгах
     function isExpired(expiresAt) {
       if (!expiresAt) return false;
       return new Date(expiresAt) < new Date();
     }
 
-    // Хугацааг харуулах текст
     function formatExpiry(expiresAt) {
       if (!expiresAt) return null;
       const exp = new Date(expiresAt);
@@ -339,7 +332,6 @@
       return `📅 ${diffDays} өдөр үлдсэн`;
     }
 
-    // Нууц үг хөрвүүлэх (SHA-256 эсвэл энгийн fallback)
     async function hashPassword(password) {
       if (window.crypto && window.crypto.subtle && window.TextEncoder) {
         const data = new TextEncoder().encode(password);
@@ -356,7 +348,6 @@
       return String(hash);
     }
 
-    // Заруудыг ачаалах
     async function loadListings() {
       if (!currentUser) return;
       const container = document.getElementById("listingsContainer");
@@ -381,7 +372,6 @@
       renderListings();
     }
 
-    // Нэвтэрсэн эсэхээс хамаарч дэлгэцийг шинэчлэх
     function updateAppView() {
       const authGate = document.getElementById("authGate");
       const mainContent = document.getElementById("mainContent");
@@ -416,7 +406,6 @@
       }
     }
 
-    // Ангиллын товчнуудыг зурах
     function renderCategories() {
       const container = document.getElementById("categoryContainer");
       const visibleCategories = [...CATEGORIES, "Миний зарууд"];
@@ -439,7 +428,6 @@
       renderListings();
     }
 
-    // Заруудын жагсаалтыг дэлгэцэнд харуулах
     function renderListings() {
       if (!currentUser) return;
 
@@ -457,7 +445,6 @@
         return matchCat && matchSearch && notExpired;
       });
 
-      // Яаралтай зарыг дээр нь эрэмбэлэх
       filtered.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
 
       if (filtered.length === 0) {
@@ -474,7 +461,7 @@
               <span class="text-xs font-semibold px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
                 ${escapeHtml(item.category)}
               </span>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 flex-wrap justify-end">
                 ${item.isPinned ? '<span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500 text-white">Яаралтай</span>' : ''}
                 <span class="text-xs text-gray-400">${escapeHtml(item.createdAt)}</span>
                 ${item.expiresAt ? `<span class="text-xs font-medium ${isExpired(item.expiresAt) ? 'text-red-500' : 'text-blue-500'}">${formatExpiry(item.expiresAt)}</span>` : ''}
@@ -511,7 +498,6 @@
       el.classList.add("hidden");
     }
 
-    // Шинэ зар нэмэх
     async function handleAddListing(event) {
       event.preventDefault();
       if (!currentUser) return;
@@ -583,7 +569,6 @@
       }
     }
 
-    // Зар устгах (зөвхөн зарын эзэн эсвэл админ)
     async function deleteListing(id) {
       if (!currentUser) return;
       const target = listings.find(item => item.id === id);
@@ -609,7 +594,6 @@
       renderListings();
     }
 
-    // Зар оруулах цонх нээх / хаах
     function openModal() {
       if (!currentUser) return;
       hideListingError();
@@ -632,7 +616,6 @@
       document.getElementById("newExpiryDate").value = "";
     }
 
-    // Нэвтрэх / Бүртгүүлэх таб шилжүүлэх
     function switchAuthTab(mode) {
       hideAuthError();
       const isLogin = mode === "login";
@@ -665,7 +648,6 @@
       el.classList.add("hidden");
     }
 
-    // Бүртгэл үүсгэх
     async function handleRegister(event) {
       event.preventDefault();
       hideAuthError();
@@ -675,22 +657,13 @@
       const password = document.getElementById("regPassword").value;
       const confirmPassword = document.getElementById("regPasswordConfirm").value;
 
-      if (!name) {
-        showAuthError("Нэрээ оруулна уу.");
-        return;
-      }
+      if (!name) { showAuthError("Нэрээ оруулна уу."); return; }
       if (!/^\d{6,12}$/.test(phone)) {
         showAuthError("Утасны дугаараа зөв оруулна уу (зөвхөн цифр, жишээ нь 88112233).");
         return;
       }
-      if (password.length < 4) {
-        showAuthError("Нууц үг хамгийн багадаа 4 тэмдэгт байх ёстой.");
-        return;
-      }
-      if (password !== confirmPassword) {
-        showAuthError("Хоёр нууц үг таарахгүй байна.");
-        return;
-      }
+      if (password.length < 4) { showAuthError("Нууц үг хамгийн багадаа 4 тэмдэгт байх ёстой."); return; }
+      if (password !== confirmPassword) { showAuthError("Хоёр нууц үг таарахгүй байна."); return; }
 
       const submitBtn = document.getElementById("registerSubmitBtn");
       submitBtn.disabled = true;
@@ -722,16 +695,9 @@
             showAuthError("Энэ утасны дугаар аль хэдийн бүртгэгдсэн байна. Нэвтрэх хэсгээр орно уу.");
             return;
           }
-          const newUser = {
-            id: Date.now(),
-            name,
-            phone,
-            passwordHash,
-            createdAt: new Date().toISOString()
-          };
+          const newUser = { id: Date.now(), name, phone, passwordHash, createdAt: new Date().toISOString() };
           users.push(newUser);
           localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(users));
-
           document.getElementById("registerForm").reset();
           completeLogin(newUser);
         }
@@ -741,7 +707,6 @@
       }
     }
 
-    // Нэвтрэх
     async function handleLogin(event) {
       event.preventDefault();
       hideAuthError();
@@ -762,14 +727,8 @@
             p_password_hash: passwordHash
           });
 
-          if (error) {
-            showAuthError(`Нэвтрэхэд алдаа гарлаа: ${error.message}`);
-            return;
-          }
-          if (!data) {
-            showAuthError("Утасны дугаар эсвэл нууц үг буруу байна.");
-            return;
-          }
+          if (error) { showAuthError(`Нэвтрэхэд алдаа гарлаа: ${error.message}`); return; }
+          if (!data) { showAuthError("Утасны дугаар эсвэл нууц үг буруу байна."); return; }
 
           document.getElementById("loginForm").reset();
           completeLogin(data);
@@ -779,7 +738,6 @@
             showAuthError("Утасны дугаар эсвэл нууц үг буруу байна.");
             return;
           }
-
           document.getElementById("loginForm").reset();
           completeLogin(user);
         }
@@ -811,14 +769,10 @@
       updateAppView();
     }
 
-    // Escape товчоор зар оруулах цонхыг хаах
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        closeModal();
-      }
+      if (e.key === "Escape") closeModal();
     });
 
-    // Хуудас ачаалахад ажиллах
     updateAppView();
   </script>
 </body>
