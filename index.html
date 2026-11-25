@@ -349,8 +349,9 @@
         headerActions.classList.add("flex");
 
         authArea.innerHTML = `
-          <span class="text-xs sm:text-sm bg-emerald-800/80 border border-emerald-500/40 px-3 py-1.5 rounded-lg font-medium">
+          <span class="text-xs sm:text-sm bg-emerald-800/80 border border-emerald-500/40 px-3 py-1.5 rounded-lg font-medium inline-flex items-center gap-1.5">
             👤 ${escapeHtml(currentUser.name)}
+            ${currentUser.isAdmin ? '<span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-amber-400 text-gray-900">Админ</span>' : ''}
           </span>
           <button onclick="logout()" class="text-xs sm:text-sm bg-emerald-800 hover:bg-emerald-900 text-emerald-100 px-3 py-2 rounded-lg transition cursor-pointer">
             Гарах
@@ -417,7 +418,7 @@
       }
 
       container.innerHTML = filtered.map(item => {
-        const isOwner = item.authorId === currentUser.id;
+        const canDelete = item.authorId === currentUser.id || Boolean(currentUser.isAdmin);
         const authorLabel = escapeHtml(item.authorName || "Хэрэглэгч");
         return `
           <div class="p-4 rounded-xl bg-white shadow-sm border ${item.isPinned ? 'border-amber-400 bg-amber-50/30' : 'border-gray-200'}">
@@ -428,7 +429,7 @@
               <div class="flex items-center gap-2">
                 ${item.isPinned ? '<span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500 text-white">Яаралтай</span>' : ''}
                 <span class="text-xs text-gray-400">${escapeHtml(item.createdAt)}</span>
-                ${isOwner ? `<button onclick="deleteListing(${item.id})" title="Устгах" class="text-xs text-gray-400 hover:text-red-600 ml-1 cursor-pointer">✕</button>` : ''}
+                ${canDelete ? `<button onclick="deleteListing(${item.id})" title="Устгах" class="text-xs text-gray-400 hover:text-red-600 ml-1 cursor-pointer">✕</button>` : ''}
               </div>
             </div>
 
@@ -527,11 +528,11 @@
       }
     }
 
-    // Зар устгах (зөвхөн өөрийн зарыг)
+    // Зар устгах (зөвхөн зарын эзэн эсвэл админ)
     async function deleteListing(id) {
       if (!currentUser) return;
       const target = listings.find(item => item.id === id);
-      if (!target || target.authorId !== currentUser.id) return;
+      if (!target || (target.authorId !== currentUser.id && !currentUser.isAdmin)) return;
 
       if (!confirm("Энэ зарыг устгах уу?")) return;
 
@@ -732,7 +733,13 @@
     }
 
     function completeLogin(user) {
-      currentUser = { id: user.id, name: user.name, phone: user.phone, mode: sb ? "cloud" : "local" };
+      currentUser = {
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        isAdmin: Boolean(user.isAdmin),
+        mode: sb ? "cloud" : "local"
+      };
       localStorage.setItem(STORAGE_KEYS.currentUser, JSON.stringify(currentUser));
       updateAppView();
     }
