@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Бүрэгхангай Зар - Сумын нэгдсэн мэдээллийн самбар</title>
+  <!-- Tailwind CSS (Дизайн хурдан гаргах сан) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Хэвтээ гүйлгэх цэсний scroll bar-ийг нуух */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 pb-16 font-sans">
+
+  <!-- 1. Толгой хэсэг (Header) -->
+  <header class="bg-emerald-700 text-white sticky top-0 z-10 shadow-md">
+    <div class="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div>
+        <h1 class="text-xl font-bold tracking-tight">БҮРЭГХАНГАЙ ЗАР</h1>
+        <p class="text-xs text-emerald-200">Сумын нэгдсэн мэдээллийн самбар</p>
+      </div>
+      <button onclick="openModal()" class="bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold px-4 py-2 rounded-lg text-sm shadow transition cursor-pointer">
+        + Зар оруулах
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 mt-5">
+    <!-- 2. Хайлтын хэсэг -->
+    <div class="mb-4">
+      <input 
+        type="text" 
+        id="searchInput" 
+        oninput="renderListings()"
+        placeholder="Унаа, өвс, алдуул мал хайх..." 
+        class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
+      >
+    </div>
+
+    <!-- 3. Ангиллын товчнууд -->
+    <div id="categoryContainer" class="flex gap-2 overflow-x-auto pb-3 mb-4 no-scrollbar">
+      <!-- JavaScript-ээр автоматаар үүснэ -->
+    </div>
+
+    <!-- 4. Заруудын жагсаалт -->
+    <div id="listingsContainer" class="space-y-3">
+      <!-- JavaScript-ээр зарууд энд орж ирнэ -->
+    </div>
+  </main>
+
+  <!-- 5. Зар оруулах цонх (Modal) -->
+  <div id="listingModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold text-gray-900">Шинэ зар оруулах</h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-700 text-xl font-bold cursor-pointer">✕</button>
+      </div>
+
+      <form id="addListingForm" onsubmit="handleAddListing(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Ангилал</label>
+          <select id="newCategory" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+            <option value="Унаа, тээвэр">Унаа, тээвэр</option>
+            <option value="Мал, ХАА">Мал, ХАА</option>
+            <option value="Худалдаа, наймаа">Худалдаа, наймаа</option>
+            <option value="Ажлын байр">Ажлын байр</option>
+            <option value="Мэдээ, зарлал">Мэдээ, зарлал</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Зарын гарчиг *</label>
+          <input type="text" id="newTitle" required placeholder="Жишээ: УБ руу маргааш өглөө явна" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Дэлгэрэнгүй мэдээлэл</label>
+          <textarea id="newDescription" rows="3" placeholder="Хэдэн хүн авах, хаанаас хөдлөх гэх мэт..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Үнэ (Заавал биш)</label>
+            <input type="text" id="newPrice" placeholder="35,000" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Утасны дугаар *</label>
+            <input type="tel" id="newPhone" required placeholder="88112233" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <input type="checkbox" id="newIsUrgent" class="w-4 h-4 text-emerald-600 rounded">
+          <label for="newIsUrgent" class="text-xs font-medium text-gray-700">Яаралтай зар (Дээгүүр онцолж харуулах)</label>
+        </div>
+
+        <div class="pt-3 flex gap-2 justify-end">
+          <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg cursor-pointer">Болих</button>
+          <button type="submit" class="px-5 py-2 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg cursor-pointer">Нийтлэх</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript Логик хэсэг -->
+  <script>
+    const CATEGORIES = ["Бүгд", "Унаа, тээвэр", "Мал, ХАА", "Худалдаа, наймаа", "Ажлын байр", "Мэдээ, зарлал"];
+    let selectedCategory = "Бүгд";
+
+    // Анхны жишээ зарууд
+    const DEFAULT_LISTINGS = [
+      {
+        id: 1,
+        category: "Унаа, тээвэр",
+        title: "Маргааш өглөө 08:00 цагт Бүрэгхангайгаас УБ явна",
+        description: "Суудлын тэргэнд 3 хүн авна. Ачаа багатай бол сайн. Драгон дээр буулгана.",
+        price: "35,000₮",
+        phone: "88112233",
+        isPinned: true,
+        createdAt: "10 минутын өмнө"
+      },
+      {
+        id: 2,
+        category: "Мал, ХАА",
+        title: "Алдуул адуу сураглаж байна (Хүрэн зүсмийн морь)",
+        description: "Баруун талын гуяндаа саран тамгатай, 4 настай хүрэн морь сумын төвөөс урд зүгт алдагдсан тул харсан үзсэн хүн холбоо барина уу. Шагналтай.",
+        price: "Шагналтай",
+        phone: "99001122",
+        isPinned: true,
+        createdAt: "1 цагийн өмнө"
+      },
+      {
+        id: 3,
+        category: "Худалдаа, наймаа",
+        title: "Ногоон тэжээл болон өвс зарна",
+        description: "Энэ жилийн шинэ ургацын сайн чанарын боодолтой өвс болон ногоон тэжээл бөөнд нь болон ширхгээр зарна.",
+        price: "12,000₮",
+        phone: "95554433",
+        isPinned: false,
+        createdAt: "Өчигдөр"
+      }
+    ];
+
+    // Хадгалсан заруудыг унших эсвэл анхны утгыг авах
+    let listings = JSON.parse(localStorage.getItem("buregkhangai_listings")) || DEFAULT_LISTINGS;
+
+    // Ангиллын товчнуудыг зурах
+    function renderCategories() {
+      const container = document.getElementById("categoryContainer");
+      container.innerHTML = CATEGORIES.map(cat => `
+        <button 
+          onclick="selectCategory('${cat}')"
+          class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition cursor-pointer ${
+            selectedCategory === cat 
+              ? 'bg-emerald-700 text-white shadow' 
+              : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+          }">
+          ${cat}
+        </button>
+      `).join("");
+    }
+
+    function selectCategory(cat) {
+      selectedCategory = cat;
+      renderCategories();
+      renderListings();
+    }
+
+    // Заруудын жагсаалтыг дэлгэцэнд харуулах
+    function renderListings() {
+      const container = document.getElementById("listingsContainer");
+      const searchQuery = document.getElementById("searchInput").value.toLowerCase();
+
+      const filtered = listings.filter(item => {
+        const matchCat = selectedCategory === "Бүгд" || item.category === selectedCategory;
+        const matchSearch = item.title.toLowerCase().includes(searchQuery) || item.description.toLowerCase().includes(searchQuery);
+        return matchCat && matchSearch;
+      });
+
+      // Яаралтай зарыг дээр нь эрэмбэлэх
+      filtered.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="text-center py-10 bg-white rounded-xl text-gray-500">Тохирох зар олдсонгүй.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => `
+        <div class="p-4 rounded-xl bg-white shadow-sm border ${item.isPinned ? 'border-amber-400 bg-amber-50/30' : 'border-gray-200'}">
+          <div class="flex justify-between items-start gap-2 mb-1">
+            <span class="text-xs font-semibold px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+              ${item.category}
+            </span>
+            <div class="flex items-center gap-2">
+              ${item.isPinned ? '<span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500 text-white">Яаралтай</span>' : ''}
+              <span class="text-xs text-gray-400">${item.createdAt}</span>
+              <button onclick="deleteListing(${item.id})" title="Устгах" class="text-xs text-gray-400 hover:text-red-600 ml-1 cursor-pointer">✕</button>
+            </div>
+          </div>
+
+          <h2 class="text-base font-bold text-gray-900 mt-1">${item.title}</h2>
+          <p class="text-sm text-gray-600 mt-1 leading-relaxed">${item.description}</p>
+
+          <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
+            <span class="font-bold text-emerald-700 text-base">${item.price}</span>
+            <a href="tel:+976${item.phone}" class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
+              📞 ${item.phone}
+            </a>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    // Шинэ зар нэмэх
+    function handleAddListing(event) {
+      event.preventDefault();
+      
+      const category = document.getElementById("newCategory").value;
+      const title = document.getElementById("newTitle").value;
+      const description = document.getElementById("newDescription").value;
+      const priceInput = document.getElementById("newPrice").value;
+      const phone = document.getElementById("newPhone").value;
+      const isPinned = document.getElementById("newIsUrgent").checked;
+
+      const newItem = {
+        id: Date.now(),
+        category,
+        title,
+        description,
+        price: priceInput ? `${priceInput}₮` : "Тохиролцоно",
+        phone,
+        isPinned,
+        createdAt: "Дөнгөж сая"
+      };
+
+      listings.unshift(newItem);
+      localStorage.setItem("buregkhangai_listings", JSON.stringify(listings));
+      
+      document.getElementById("addListingForm").reset();
+      closeModal();
+      renderListings();
+    }
+
+    // Зар устгах
+    function deleteListing(id) {
+      if (confirm("Энэ зарыг устгах уу?")) {
+        listings = listings.filter(item => item.id !== id);
+        localStorage.setItem("buregkhangai_listings", JSON.stringify(listings));
+        renderListings();
+      }
+    }
+
+    // Цонх нээх / хаах
+    function openModal() {
+      const modal = document.getElementById("listingModal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeModal() {
+      const modal = document.getElementById("listingModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    // Хуудас ачаалахад ажиллах
+    renderCategories();
+    renderListings();
+  </script>
+</body>
+</html>
