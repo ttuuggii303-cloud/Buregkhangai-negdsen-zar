@@ -4,12 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Бүрэгхангай Зар - Сумын нэгдсэн мэдээллийн самбар</title>
-  <!-- Tailwind CSS (Дизайн хурдан гаргах сан) -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Supabase (Бүх төхөөрөмж хооронд мэдээлэл хуваалцах сан) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* Хэвтээ гүйлгэх цэсний scroll bar-ийг нуух */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
@@ -24,9 +21,7 @@
         <p class="text-xs text-emerald-200">Сумын нэгдсэн мэдээллийн самбар</p>
       </div>
       <div id="headerActions" class="hidden items-center gap-2">
-        <div id="authArea" class="flex items-center gap-2">
-          <!-- JavaScript-ээр нэвтэрсэн хэрэглэгчийн мэдээлэл гарна -->
-        </div>
+        <div id="authArea" class="flex items-center gap-2"></div>
         <button onclick="openModal()" class="bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold px-4 py-2 rounded-lg text-sm shadow transition cursor-pointer">
           + Зар оруулах
         </button>
@@ -34,17 +29,16 @@
     </div>
   </header>
 
-  <!-- 2. Эхлээд нэвтрэх / бүртгүүлэх дэлгэц (Нэвтрээгүй үед харагдана) -->
+  <!-- 2. Нэвтрэх / Бүртгүүлэх дэлгэц -->
   <section id="authGate" class="fixed inset-0 flex items-center justify-center px-4 z-20" style="background-image: url('bg.jpg'); background-size: cover; background-position: center;">
-    <!-- Арын дэвсгэр бүдгэрүүлэгч -->
     <div class="absolute inset-0 bg-black/30 backdrop-blur-[2px]"></div>
     <div class="relative bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-2xl border border-white/60 w-full max-w-md">
       <div class="text-center mb-5">
-        <h2 class="text-xl font-bold text-gray-900">Тавтай морил</h2>
-        <p class="text-sm text-gray-500 mt-1">Зарын мэдээллийг харахын тулд нэвтэрнэ үү эсвэл бүртгүүлнэ үү.</p>
+        <h2 class="text-xl font-bold text-gray-900">🏔️ Бүрэгхангай Зар</h2>
+        <p class="text-sm text-gray-500 mt-1">Нэвтрэх эсвэл бүртгүүлэхийн тулд утасны дугаараа оруулна уу.</p>
       </div>
 
-      <!-- Таб шилжүүлэгч -->
+      <!-- Таб -->
       <div class="grid grid-cols-2 gap-1 bg-gray-100 p-1 rounded-xl mb-4">
         <button type="button" id="tabLogin" onclick="switchAuthTab('login')" class="py-2 text-sm font-semibold rounded-lg transition cursor-pointer bg-white text-emerald-700 shadow-sm">
           Нэвтрэх
@@ -54,80 +48,60 @@
         </button>
       </div>
 
-      <!-- Алдааны мессеж -->
       <div id="authError" class="hidden mb-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-medium"></div>
 
-      <!-- Нэвтрэх форм -->
+      <!-- Нэвтрэх форм — зөвхөн утасны дугаар -->
       <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-3">
         <div>
           <label class="block text-xs font-semibold text-gray-600 mb-1">Утасны дугаар *</label>
-          <input type="tel" id="loginPhone" required placeholder="88112233" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
+          <input type="tel" id="loginPhone" required placeholder="88112233"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Нууц үг *</label>
-          <input type="password" id="loginPassword" required placeholder="••••" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
-        </div>
+        <p class="text-[11px] text-gray-400">Бүртгэлтэй утасны дугаараа оруулаад нэвтэрнэ үү.</p>
         <button type="submit" id="loginSubmitBtn" class="w-full py-2.5 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg transition cursor-pointer">
           Нэвтрэх
         </button>
       </form>
 
-      <!-- Бүртгүүлэх форм -->
+      <!-- Бүртгүүлэх форм — нэр + утас -->
       <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-3 hidden">
         <div>
           <label class="block text-xs font-semibold text-gray-600 mb-1">Таны нэр *</label>
-          <input type="text" id="regName" required placeholder="Жишээ: Б.Болд" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
+          <input type="text" id="regName" required placeholder="Жишээ: Б.Болд"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-600 mb-1">Утасны дугаар *</label>
-          <input type="tel" id="regPhone" required placeholder="88112233" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
+          <input type="tel" id="regPhone" required placeholder="88112233"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Нууц үг * (хамгийн багадаа 4 тэмдэгт)</label>
-          <input type="password" id="regPassword" required minlength="4" placeholder="••••" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Нууц үг давтах *</label>
-          <input type="password" id="regPasswordConfirm" required minlength="4" placeholder="••••" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
-        </div>
+        <p class="text-[11px] text-gray-400">Нэр, утасны дугаар оруулаад бүртгүүлнэ үү. Нууц үг шаардлагагүй.</p>
         <button type="submit" id="registerSubmitBtn" class="w-full py-2.5 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg transition cursor-pointer">
           Бүртгүүлэх
         </button>
       </form>
     </div>
-  </div>
   </section>
 
-  <!-- 3. Үндсэн мэдээлэл (Зөвхөн нэвтэрсний дараа харагдана) -->
+  <!-- 3. Үндсэн хуудас -->
   <main id="mainContent" class="max-w-3xl mx-auto px-4 mt-5 hidden">
-    <!-- Хайлт ба шинэчлэх товч -->
     <div class="mb-4 flex gap-2">
-      <input 
-        type="text" 
-        id="searchInput" 
-        oninput="renderListings()"
-        placeholder="Унаа, өвс, алдуул мал хайх..." 
-        class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
-      >
-      <button onclick="loadListings()" title="Шинэчлэх" class="px-4 py-3 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 shadow-sm text-sm font-semibold text-emerald-700 whitespace-nowrap cursor-pointer">
+      <input type="text" id="searchInput" oninput="renderListings()"
+        placeholder="Унаа, өвс, алдуул мал хайх..."
+        class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
+      <button onclick="loadListings()" title="Шинэчлэх"
+        class="px-4 py-3 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 shadow-sm text-sm font-semibold text-emerald-700 whitespace-nowrap cursor-pointer">
         ↻ Шинэчлэх
       </button>
     </div>
 
-    <!-- Ангиллын товчнууд -->
-    <div id="categoryContainer" class="flex gap-2 overflow-x-auto pb-3 mb-4 no-scrollbar">
-      <!-- JavaScript-ээр автоматаар үүснэ -->
-    </div>
-
-    <!-- Заруудын жагсаалт -->
-    <div id="listingsContainer" class="space-y-3">
-      <!-- JavaScript-ээр зарууд энд орж ирнэ -->
-    </div>
+    <div id="categoryContainer" class="flex gap-2 overflow-x-auto pb-3 mb-4 no-scrollbar"></div>
+    <div id="listingsContainer" class="space-y-3"></div>
   </main>
 
-  <!-- 4. Зар оруулах цонх (Modal) -->
+  <!-- 4. Зар оруулах цонх -->
   <div id="listingModal" onclick="if(event.target === this) closeModal()" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-bold text-gray-900">Шинэ зар оруулах</h3>
         <button onclick="closeModal()" class="text-gray-400 hover:text-gray-700 text-xl font-bold cursor-pointer">✕</button>
@@ -147,29 +121,34 @@
 
         <div>
           <label class="block text-xs font-semibold text-gray-600 mb-1">Зарын гарчиг *</label>
-          <input type="text" id="newTitle" required placeholder="Жишээ: УБ руу маргааш өглөө явна" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+          <input type="text" id="newTitle" required placeholder="Жишээ: УБ руу маргааш өглөө явна"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
         </div>
 
         <div>
           <label class="block text-xs font-semibold text-gray-600 mb-1">Дэлгэрэнгүй мэдээлэл</label>
-          <textarea id="newDescription" rows="3" placeholder="Хэдэн хүн авах, хаанаас хөдлөх гэх мэт..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></textarea>
+          <textarea id="newDescription" rows="3" placeholder="Хэдэн хүн авах, хаанаас хөдлөх гэх мэт..."
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></textarea>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold text-gray-600 mb-1">Үнэ (Заавал биш)</label>
-            <input type="text" id="newPrice" placeholder="35,000" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+            <input type="text" id="newPrice" placeholder="35,000"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-600 mb-1">Утасны дугаар *</label>
-            <input type="tel" id="newPhone" required placeholder="88112233" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+            <input type="tel" id="newPhone" required placeholder="88112233"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Зарын хугацаа (хэзээ хүртэл идэвхтэй байх)</label>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Зарын хугацаа</label>
           <div class="grid grid-cols-2 gap-2">
-            <select id="newExpiryPreset" onchange="applyExpiryPreset()" class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+            <select id="newExpiryPreset" onchange="applyExpiryPreset()"
+              class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
               <option value="">— Хугацаа сонгох —</option>
               <option value="1">1 өдөр</option>
               <option value="3">3 өдөр</option>
@@ -178,9 +157,10 @@
               <option value="30">30 өдөр</option>
               <option value="custom">Өөрөө тохируулах</option>
             </select>
-            <input type="date" id="newExpiryDate" class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600">
+            <input type="date" id="newExpiryDate"
+              class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600">
           </div>
-          <p class="text-[11px] text-gray-400 mt-1">Хугацаа дууссан зарууд автоматаар нуугдана. Хоосон орхивол 30 хоног идэвхтэй байна.</p>
+          <p class="text-[11px] text-gray-400 mt-1">Хоосон орхивол 30 хоног идэвхтэй байна.</p>
         </div>
 
         <div class="flex items-center gap-2 pt-1">
@@ -198,11 +178,28 @@
     </div>
   </div>
 
-  <!-- JavaScript Логик хэсэг -->
+  <!-- 5. Нэр солих цонх (Settings) -->
+  <div id="settingsModal" onclick="if(event.target === this) closeSettings()" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold text-gray-900">⚙️ Тохиргоо</h3>
+        <button onclick="closeSettings()" class="text-gray-400 hover:text-gray-700 text-xl font-bold cursor-pointer">✕</button>
+      </div>
+      <div id="settingsMsg" class="hidden mb-3 p-3 rounded-lg text-xs font-medium"></div>
+      <form id="changeNameForm" onsubmit="handleChangeName(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Шинэ нэр *</label>
+          <input type="text" id="newDisplayName" required placeholder="Жишээ: Б.Болд"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
+        </div>
+        <button type="submit" id="changeNameBtn" class="w-full py-2.5 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg transition cursor-pointer">
+          Нэр хадгалах
+        </button>
+      </form>
+    </div>
+  </div>
+
   <script>
-    // =========================================================================
-    // SUPABASE ТОХИРГОО
-    // =========================================================================
     const SUPABASE_URL = "https://ixsnccckocqulywctvlv.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_Abw6EF6XLTpAu3zCcYro2g_jmSIRKUS";
 
@@ -222,40 +219,22 @@
 
     const DEFAULT_LISTINGS = [
       {
-        id: 1,
-        category: "Унаа, тээвэр",
+        id: 1, category: "Унаа, тээвэр",
         title: "Маргааш өглөө 08:00 цагт Бүрэгхангайгаас УБ явна",
         description: "Суудлын тэргэнд 3 хүн авна. Ачаа багатай бол сайн. Драгон дээр буулгана.",
-        price: "35,000₮",
-        phone: "88112233",
-        isPinned: true,
-        authorId: null,
-        authorName: "Админ",
-        createdAt: "10 минутын өмнө"
+        price: "35,000₮", phone: "88112233", isPinned: true, authorId: null, authorName: "Админ", createdAt: "10 минутын өмнө"
       },
       {
-        id: 2,
-        category: "Мал, ХАА",
+        id: 2, category: "Мал, ХАА",
         title: "Алдуул адуу сураглаж байна (Хүрэн зүсмийн морь)",
-        description: "Баруун талын гуяндаа саран тамгатай, 4 настай хүрэн морь сумын төвөөс урд зүгт алдагдсан тул харсан үзсэн хүн холбоо барина уу. Шагналтай.",
-        price: "Шагналтай",
-        phone: "99001122",
-        isPinned: true,
-        authorId: null,
-        authorName: "Админ",
-        createdAt: "1 цагийн өмнө"
+        description: "Баруун талын гуяндаа саран тамгатай, 4 настай хүрэн морь алдагдсан тул харсан үзсэн хүн холбоо барина уу.",
+        price: "Шагналтай", phone: "99001122", isPinned: true, authorId: null, authorName: "Админ", createdAt: "1 цагийн өмнө"
       },
       {
-        id: 3,
-        category: "Худалдаа, наймаа",
+        id: 3, category: "Худалдаа, наймаа",
         title: "Ногоон тэжээл болон өвс зарна",
         description: "Энэ жилийн шинэ ургацын сайн чанарын боодолтой өвс болон ногоон тэжээл бөөнд нь болон ширхгээр зарна.",
-        price: "12,000₮",
-        phone: "95554433",
-        isPinned: false,
-        authorId: null,
-        authorName: "Админ",
-        createdAt: "Өчигдөр"
+        price: "12,000₮", phone: "95554433", isPinned: false, authorId: null, authorName: "Админ", createdAt: "Өчигдөр"
       }
     ];
 
@@ -267,13 +246,11 @@
       localStorage.removeItem(STORAGE_KEYS.currentUser);
     }
 
+    // ── Utility ──────────────────────────────────────────────
     function escapeHtml(text) {
       return String(text ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
     }
 
     function formatTimeAgo(isoOrText) {
@@ -286,23 +263,16 @@
       if (diffMin < 60) return `${diffMin} минутын өмнө`;
       const diffHour = Math.floor(diffMin / 60);
       if (diffHour < 24) return `${diffHour} цагийн өмнө`;
-      const diffDay = Math.floor(diffHour / 24);
-      return `${diffDay} өдрийн өмнө`;
+      return `${Math.floor(diffHour / 24)} өдрийн өмнө`;
     }
 
     function normalizeListingRow(row) {
       return {
-        id: row.id,
-        category: row.category,
-        title: row.title,
-        description: row.description || "",
-        price: row.price || "Тохиролцоно",
-        phone: row.phone,
-        isPinned: Boolean(row.is_pinned),
-        authorId: row.author_id,
-        authorName: row.author_name || "Хэрэглэгч",
-        createdAt: formatTimeAgo(row.created_at),
-        expiresAt: row.expires_at || null
+        id: row.id, category: row.category, title: row.title,
+        description: row.description || "", price: row.price || "Тохиролцоно",
+        phone: row.phone, isPinned: Boolean(row.is_pinned),
+        authorId: row.author_id, authorName: row.author_name || "Хэрэглэгч",
+        createdAt: formatTimeAgo(row.created_at), expiresAt: row.expires_at || null
       };
     }
 
@@ -326,55 +296,131 @@
 
     function formatExpiry(expiresAt) {
       if (!expiresAt) return null;
-      const exp = new Date(expiresAt);
       if (isExpired(expiresAt)) return "⛔ Хугацаа дууссан";
-      const diffMs = exp - Date.now();
-      const diffDays = Math.ceil(diffMs / 86400000);
+      const diffDays = Math.ceil((new Date(expiresAt) - Date.now()) / 86400000);
       if (diffDays <= 0) return "⚠️ Өнөөдөр дуусна";
       if (diffDays === 1) return "⚠️ Маргааш дуусна";
       return `📅 ${diffDays} өдөр үлдсэн`;
     }
 
-    async function hashPassword(password) {
-      if (window.crypto && window.crypto.subtle && window.TextEncoder) {
-        const data = new TextEncoder().encode(password);
-        const hashBuffer = await window.crypto.subtle.digest("SHA-256", data);
-        return Array.from(new Uint8Array(hashBuffer))
-          .map(b => b.toString(16).padStart(2, "0"))
-          .join("");
-      }
-      let hash = 0;
-      for (let i = 0; i < password.length; i++) {
-        hash = ((hash << 5) - hash) + password.charCodeAt(i);
-        hash |= 0;
-      }
-      return String(hash);
+    // ── Auth ─────────────────────────────────────────────────
+    function showAuthError(msg) {
+      const el = document.getElementById("authError");
+      el.textContent = msg; el.classList.remove("hidden");
+    }
+    function hideAuthError() {
+      const el = document.getElementById("authError");
+      el.textContent = ""; el.classList.add("hidden");
     }
 
-    async function loadListings() {
-      if (!currentUser) return;
-      const container = document.getElementById("listingsContainer");
+    function switchAuthTab(mode) {
+      hideAuthError();
+      const isLogin = mode === "login";
+      document.getElementById("loginForm").classList.toggle("hidden", !isLogin);
+      document.getElementById("registerForm").classList.toggle("hidden", isLogin);
+      const active = "py-2 text-sm font-semibold rounded-lg transition cursor-pointer bg-white text-emerald-700 shadow-sm";
+      const inactive = "py-2 text-sm font-semibold rounded-lg transition cursor-pointer text-gray-600 hover:text-gray-900";
+      document.getElementById("tabLogin").className = isLogin ? active : inactive;
+      document.getElementById("tabRegister").className = isLogin ? inactive : active;
+    }
 
-      if (sb) {
-        container.innerHTML = `<div class="text-center py-10 bg-white rounded-xl text-gray-500">Заруудыг ачаалж байна...</div>`;
-        const { data, error } = await sb
-          .from("listings")
-          .select("*")
-          .order("is_pinned", { ascending: false })
-          .order("created_at", { ascending: false });
+    // Бүртгүүлэх — зөвхөн нэр + утас
+    async function handleRegister(event) {
+      event.preventDefault();
+      hideAuthError();
+      const name = document.getElementById("regName").value.trim();
+      const phone = normalizePhone(document.getElementById("regPhone").value);
 
-        if (error) {
-          container.innerHTML = `<div class="text-center py-10 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">Заруудыг татахад алдаа гарлаа: ${escapeHtml(error.message)}</div>`;
-          return;
+      if (!name) { showAuthError("Нэрээ оруулна уу."); return; }
+      if (!/^\d{6,12}$/.test(phone)) {
+        showAuthError("Утасны дугаараа зөв оруулна уу (жишээ: 88112233).");
+        return;
+      }
+
+      const btn = document.getElementById("registerSubmitBtn");
+      btn.disabled = true; btn.textContent = "Бүртгэж байна...";
+
+      try {
+        if (sb) {
+          const { data, error } = await sb.rpc("register_user", { p_name: name, p_phone: phone });
+          if (error) {
+            if (error.code === "23505" || String(error.message).toLowerCase().includes("duplicate")) {
+              showAuthError("Энэ утасны дугаар аль хэдийн бүртгэгдсэн байна. Нэвтрэх хэсгээр орно уу.");
+            } else {
+              showAuthError(`Бүртгүүлэхэд алдаа гарлаа: ${error.message}`);
+            }
+            return;
+          }
+          document.getElementById("registerForm").reset();
+          completeLogin(data);
+        } else {
+          if (users.some(u => u.phone === phone)) {
+            showAuthError("Энэ утасны дугаар аль хэдийн бүртгэгдсэн байна.");
+            return;
+          }
+          const newUser = { id: Date.now(), name, phone, createdAt: new Date().toISOString() };
+          users.push(newUser);
+          localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(users));
+          document.getElementById("registerForm").reset();
+          completeLogin(newUser);
         }
-        listings = (data || []).map(normalizeListingRow);
-      } else {
-        listings = JSON.parse(localStorage.getItem(STORAGE_KEYS.listings)) || DEFAULT_LISTINGS;
+      } finally {
+        btn.disabled = false; btn.textContent = "Бүртгүүлэх";
       }
-
-      renderListings();
     }
 
+    // Нэвтрэх — зөвхөн утасны дугаар
+    async function handleLogin(event) {
+      event.preventDefault();
+      hideAuthError();
+      const phone = normalizePhone(document.getElementById("loginPhone").value);
+
+      if (!/^\d{6,12}$/.test(phone)) {
+        showAuthError("Утасны дугаараа зөв оруулна уу (жишээ: 88112233).");
+        return;
+      }
+
+      const btn = document.getElementById("loginSubmitBtn");
+      btn.disabled = true; btn.textContent = "Нэвтэрч байна...";
+
+      try {
+        if (sb) {
+          const { data, error } = await sb.rpc("login_user", { p_phone: phone });
+          if (error) { showAuthError(`Нэвтрэхэд алдаа гарлаа: ${error.message}`); return; }
+          if (!data) { showAuthError("Утасны дугаар олдсонгүй. Эхлээд бүртгүүлнэ үү."); return; }
+          document.getElementById("loginForm").reset();
+          completeLogin(data);
+        } else {
+          const user = users.find(u => u.phone === phone);
+          if (!user) { showAuthError("Утасны дугаар олдсонгүй. Эхлээд бүртгүүлнэ үү."); return; }
+          document.getElementById("loginForm").reset();
+          completeLogin(user);
+        }
+      } finally {
+        btn.disabled = false; btn.textContent = "Нэвтрэх";
+      }
+    }
+
+    function completeLogin(user) {
+      currentUser = {
+        id: user.id, name: user.name, phone: user.phone,
+        isAdmin: Boolean(user.isAdmin), mode: sb ? "cloud" : "local"
+      };
+      localStorage.setItem(STORAGE_KEYS.currentUser, JSON.stringify(currentUser));
+      updateAppView();
+    }
+
+    function logout() {
+      currentUser = null;
+      localStorage.removeItem(STORAGE_KEYS.currentUser);
+      closeModal(); closeSettings();
+      document.getElementById("addListingForm").reset();
+      document.getElementById("searchInput").value = "";
+      selectedCategory = "Бүгд";
+      updateAppView();
+    }
+
+    // ── App View ─────────────────────────────────────────────
     function updateAppView() {
       const authGate = document.getElementById("authGate");
       const mainContent = document.getElementById("mainContent");
@@ -392,11 +438,15 @@
             👤 ${escapeHtml(currentUser.name)}
             ${currentUser.isAdmin ? '<span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-amber-400 text-gray-900">Админ</span>' : ''}
           </span>
-          <button onclick="logout()" class="text-xs sm:text-sm bg-emerald-800 hover:bg-emerald-900 text-emerald-100 px-3 py-2 rounded-lg transition cursor-pointer">
+          <button onclick="openSettings()" title="Тохиргоо"
+            class="text-xs sm:text-sm bg-emerald-800 hover:bg-emerald-900 text-emerald-100 px-3 py-2 rounded-lg transition cursor-pointer">
+            ⚙️
+          </button>
+          <button onclick="logout()"
+            class="text-xs sm:text-sm bg-emerald-800 hover:bg-emerald-900 text-emerald-100 px-3 py-2 rounded-lg transition cursor-pointer">
             Гарах
           </button>
         `;
-
         renderCategories();
         loadListings();
       } else {
@@ -409,15 +459,88 @@
       }
     }
 
+    // ── Settings ─────────────────────────────────────────────
+    function openSettings() {
+      if (!currentUser) return;
+      document.getElementById("newDisplayName").value = currentUser.name;
+      hideSettingsMsg();
+      const m = document.getElementById("settingsModal");
+      m.classList.remove("hidden"); m.classList.add("flex");
+    }
+
+    function closeSettings() {
+      const m = document.getElementById("settingsModal");
+      m.classList.add("hidden"); m.classList.remove("flex");
+    }
+
+    function showSettingsMsg(msg, isSuccess) {
+      const el = document.getElementById("settingsMsg");
+      el.textContent = msg;
+      el.className = `mb-3 p-3 rounded-lg text-xs font-medium ${isSuccess ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`;
+      el.classList.remove("hidden");
+    }
+    function hideSettingsMsg() {
+      const el = document.getElementById("settingsMsg");
+      el.textContent = ""; el.classList.add("hidden");
+    }
+
+    async function handleChangeName(event) {
+      event.preventDefault();
+      hideSettingsMsg();
+      const newName = document.getElementById("newDisplayName").value.trim();
+      if (!newName) { showSettingsMsg("Нэрээ оруулна уу.", false); return; }
+
+      const btn = document.getElementById("changeNameBtn");
+      btn.disabled = true; btn.textContent = "Хадгалж байна...";
+
+      try {
+        if (sb) {
+          const { data, error } = await sb.rpc("change_name", {
+            p_user_id: currentUser.id, p_new_name: newName
+          });
+          if (error) { showSettingsMsg(`Алдаа гарлаа: ${error.message}`, false); return; }
+        } else {
+          const user = users.find(u => u.id === currentUser.id);
+          if (user) { user.name = newName; localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(users)); }
+        }
+        currentUser.name = newName;
+        localStorage.setItem(STORAGE_KEYS.currentUser, JSON.stringify(currentUser));
+        showSettingsMsg("✅ Нэр амжилттай солигдлоо!", true);
+        updateAppView();
+      } finally {
+        btn.disabled = false; btn.textContent = "Нэр хадгалах";
+      }
+    }
+
+    // ── Listings ─────────────────────────────────────────────
+    async function loadListings() {
+      if (!currentUser) return;
+      const container = document.getElementById("listingsContainer");
+
+      if (sb) {
+        container.innerHTML = `<div class="text-center py-10 bg-white rounded-xl text-gray-500">Заруудыг ачаалж байна...</div>`;
+        const { data, error } = await sb.from("listings").select("*")
+          .order("is_pinned", { ascending: false })
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          container.innerHTML = `<div class="text-center py-10 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">Алдаа: ${escapeHtml(error.message)}</div>`;
+          return;
+        }
+        listings = (data || []).map(normalizeListingRow);
+      } else {
+        listings = JSON.parse(localStorage.getItem(STORAGE_KEYS.listings)) || DEFAULT_LISTINGS;
+      }
+      renderListings();
+    }
+
     function renderCategories() {
       const container = document.getElementById("categoryContainer");
-      const visibleCategories = [...CATEGORIES, "Миний зарууд"];
-      container.innerHTML = visibleCategories.map(cat => `
-        <button 
-          onclick="selectCategory('${cat}')"
+      container.innerHTML = [...CATEGORIES, "Миний зарууд"].map(cat => `
+        <button onclick="selectCategory('${cat}')"
           class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition cursor-pointer ${
-            selectedCategory === cat 
-              ? 'bg-emerald-700 text-white shadow' 
+            selectedCategory === cat
+              ? 'bg-emerald-700 text-white shadow'
               : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
           }">
           ${cat}
@@ -433,19 +556,17 @@
 
     function renderListings() {
       if (!currentUser) return;
-
       const container = document.getElementById("listingsContainer");
-      const searchQuery = document.getElementById("searchInput").value.toLowerCase();
+      const q = document.getElementById("searchInput").value.toLowerCase();
 
       const filtered = listings.filter(item => {
         const matchCat = selectedCategory === "Бүгд"
           || (selectedCategory === "Миний зарууд" && item.authorId === currentUser.id)
           || item.category === selectedCategory;
-        const matchSearch = (item.title || "").toLowerCase().includes(searchQuery)
-          || (item.description || "").toLowerCase().includes(searchQuery);
+        const matchSearch = (item.title || "").toLowerCase().includes(q)
+          || (item.description || "").toLowerCase().includes(q);
         const canDelete = item.authorId === currentUser.id || Boolean(currentUser.isAdmin);
-        const notExpired = !isExpired(item.expiresAt) || canDelete;
-        return matchCat && matchSearch && notExpired;
+        return matchCat && matchSearch && (!isExpired(item.expiresAt) || canDelete);
       });
 
       filtered.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
@@ -457,13 +578,10 @@
 
       container.innerHTML = filtered.map(item => {
         const canDelete = item.authorId === currentUser.id || Boolean(currentUser.isAdmin);
-        const authorLabel = escapeHtml(item.authorName || "Хэрэглэгч");
         return `
           <div class="p-4 rounded-xl bg-white shadow-sm border ${item.isPinned ? 'border-amber-400 bg-amber-50/30' : 'border-gray-200'}">
             <div class="flex justify-between items-start gap-2 mb-1">
-              <span class="text-xs font-semibold px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                ${escapeHtml(item.category)}
-              </span>
+              <span class="text-xs font-semibold px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800">${escapeHtml(item.category)}</span>
               <div class="flex items-center gap-2 flex-wrap justify-end">
                 ${item.isPinned ? '<span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500 text-white">Яаралтай</span>' : ''}
                 <span class="text-xs text-gray-400">${escapeHtml(item.createdAt)}</span>
@@ -471,34 +589,29 @@
                 ${canDelete ? `<button onclick="deleteListing(${item.id})" title="Устгах" class="text-xs text-gray-400 hover:text-red-600 ml-1 cursor-pointer">✕</button>` : ''}
               </div>
             </div>
-
             <h2 class="text-base font-bold text-gray-900 mt-1">${escapeHtml(item.title)}</h2>
             <p class="text-sm text-gray-600 mt-1 leading-relaxed">${escapeHtml(item.description)}</p>
-
             <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center gap-2">
               <div>
                 <span class="font-bold text-emerald-700 text-base">${escapeHtml(item.price)}</span>
-                <span class="block text-xs text-gray-400">Нийтэлсэн: ${authorLabel}</span>
+                <span class="block text-xs text-gray-400">Нийтэлсэн: ${escapeHtml(item.authorName || "Хэрэглэгч")}</span>
               </div>
-              <a href="tel:+976${escapeHtml(item.phone)}" class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
+              <a href="tel:+976${escapeHtml(item.phone)}"
+                class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
                 📞 ${escapeHtml(item.phone)}
               </a>
             </div>
-          </div>
-        `;
+          </div>`;
       }).join("");
     }
 
-    function showListingError(message) {
+    function showListingError(msg) {
       const el = document.getElementById("listingError");
-      el.textContent = message;
-      el.classList.remove("hidden");
+      el.textContent = msg; el.classList.remove("hidden");
     }
-
     function hideListingError() {
       const el = document.getElementById("listingError");
-      el.textContent = "";
-      el.classList.add("hidden");
+      el.textContent = ""; el.classList.add("hidden");
     }
 
     async function handleAddListing(event) {
@@ -506,9 +619,8 @@
       if (!currentUser) return;
       hideListingError();
 
-      const submitBtn = document.getElementById("listingSubmitBtn");
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Хадгалж байна...";
+      const btn = document.getElementById("listingSubmitBtn");
+      btn.disabled = true; btn.textContent = "Хадгалж байна...";
 
       try {
         const category = document.getElementById("newCategory").value;
@@ -524,40 +636,19 @@
           : new Date(Date.now() + 30 * 86400000).toISOString();
 
         if (sb) {
-          const { data, error } = await sb
-            .from("listings")
-            .insert({
-              category,
-              title,
-              description,
-              price,
-              phone,
-              is_pinned: isPinned,
-              author_id: currentUser.id,
-              author_name: currentUser.name,
-              expires_at: expiresAt
-            })
-            .select()
-            .single();
+          const { data, error } = await sb.from("listings").insert({
+            category, title, description, price, phone,
+            is_pinned: isPinned, author_id: currentUser.id,
+            author_name: currentUser.name, expires_at: expiresAt
+          }).select().single();
 
-          if (error) {
-            showListingError(`Зар хадгалахад алдаа гарлаа: ${error.message}`);
-            return;
-          }
+          if (error) { showListingError(`Алдаа гарлаа: ${error.message}`); return; }
           listings.unshift(normalizeListingRow(data));
         } else {
           const newItem = {
-            id: Date.now(),
-            category,
-            title,
-            description,
-            price,
-            phone,
-            isPinned,
-            authorId: currentUser.id,
-            authorName: currentUser.name,
-            createdAt: "Дөнгөж сая",
-            expiresAt
+            id: Date.now(), category, title, description, price, phone,
+            isPinned, authorId: currentUser.id, authorName: currentUser.name,
+            createdAt: "Дөнгөж сая", expiresAt
           };
           listings.unshift(newItem);
           localStorage.setItem(STORAGE_KEYS.listings, JSON.stringify(listings));
@@ -567,8 +658,7 @@
         closeModal();
         renderListings();
       } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Нийтлэх";
+        btn.disabled = false; btn.textContent = "Нийтлэх";
       }
     }
 
@@ -576,204 +666,41 @@
       if (!currentUser) return;
       const target = listings.find(item => item.id === id);
       if (!target || (target.authorId !== currentUser.id && !currentUser.isAdmin)) return;
-
       if (!confirm("Энэ зарыг устгах уу?")) return;
 
       if (sb) {
         const { data, error } = await sb.rpc("delete_own_listing", {
-          p_listing_id: id,
-          p_author_id: currentUser.id
+          p_listing_id: id, p_author_id: currentUser.id
         });
-        if (error || !data) {
-          alert("Зар устгахад алдаа гарлаа.");
-          return;
-        }
-        listings = listings.filter(item => item.id !== id);
+        if (error || !data) { alert("Зар устгахад алдаа гарлаа."); return; }
       } else {
-        listings = listings.filter(item => item.id !== id);
-        localStorage.setItem(STORAGE_KEYS.listings, JSON.stringify(listings));
+        localStorage.setItem(STORAGE_KEYS.listings, JSON.stringify(
+          listings.filter(item => item.id !== id)
+        ));
       }
-
+      listings = listings.filter(item => item.id !== id);
       renderListings();
     }
 
     function openModal() {
       if (!currentUser) return;
       hideListingError();
-
       const phoneField = document.getElementById("newPhone");
-      if (!phoneField.value) {
-        phoneField.value = currentUser.phone;
-      }
-      const modal = document.getElementById("listingModal");
-      modal.classList.remove("hidden");
-      modal.classList.add("flex");
+      if (!phoneField.value) phoneField.value = currentUser.phone;
+      const m = document.getElementById("listingModal");
+      m.classList.remove("hidden"); m.classList.add("flex");
     }
 
     function closeModal() {
       hideListingError();
-      const modal = document.getElementById("listingModal");
-      modal.classList.add("hidden");
-      modal.classList.remove("flex");
+      const m = document.getElementById("listingModal");
+      m.classList.add("hidden"); m.classList.remove("flex");
       document.getElementById("newExpiryPreset").value = "";
       document.getElementById("newExpiryDate").value = "";
     }
 
-    function switchAuthTab(mode) {
-      hideAuthError();
-      const isLogin = mode === "login";
-      const loginForm = document.getElementById("loginForm");
-      const registerForm = document.getElementById("registerForm");
-      const tabLogin = document.getElementById("tabLogin");
-      const tabRegister = document.getElementById("tabRegister");
-
-      loginForm.classList.toggle("hidden", !isLogin);
-      registerForm.classList.toggle("hidden", isLogin);
-
-      if (isLogin) {
-        tabLogin.className = "py-2 text-sm font-semibold rounded-lg transition cursor-pointer bg-white text-emerald-700 shadow-sm";
-        tabRegister.className = "py-2 text-sm font-semibold rounded-lg transition cursor-pointer text-gray-600 hover:text-gray-900";
-      } else {
-        tabRegister.className = "py-2 text-sm font-semibold rounded-lg transition cursor-pointer bg-white text-emerald-700 shadow-sm";
-        tabLogin.className = "py-2 text-sm font-semibold rounded-lg transition cursor-pointer text-gray-600 hover:text-gray-900";
-      }
-    }
-
-    function showAuthError(message) {
-      const el = document.getElementById("authError");
-      el.textContent = message;
-      el.classList.remove("hidden");
-    }
-
-    function hideAuthError() {
-      const el = document.getElementById("authError");
-      el.textContent = "";
-      el.classList.add("hidden");
-    }
-
-    async function handleRegister(event) {
-      event.preventDefault();
-      hideAuthError();
-
-      const name = document.getElementById("regName").value.trim();
-      const phone = normalizePhone(document.getElementById("regPhone").value);
-      const password = document.getElementById("regPassword").value;
-      const confirmPassword = document.getElementById("regPasswordConfirm").value;
-
-      if (!name) { showAuthError("Нэрээ оруулна уу."); return; }
-      if (!/^\d{6,12}$/.test(phone)) {
-        showAuthError("Утасны дугаараа зөв оруулна уу (зөвхөн цифр, жишээ нь 88112233).");
-        return;
-      }
-      if (password.length < 4) { showAuthError("Нууц үг хамгийн багадаа 4 тэмдэгт байх ёстой."); return; }
-      if (password !== confirmPassword) { showAuthError("Хоёр нууц үг таарахгүй байна."); return; }
-
-      const submitBtn = document.getElementById("registerSubmitBtn");
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Бүртгэж байна...";
-
-      try {
-        const passwordHash = await hashPassword(password);
-
-        if (sb) {
-          const { data, error } = await sb.rpc("register_user", {
-            p_name: name,
-            p_phone: phone,
-            p_password_hash: passwordHash
-          });
-
-          if (error) {
-            if (error.code === "23505" || String(error.message).toLowerCase().includes("duplicate")) {
-              showAuthError("Энэ утасны дугаар аль хэдийн бүртгэгдсэн байна. Нэвтрэх хэсгээр орно уу.");
-            } else {
-              showAuthError(`Бүртгүүлэхэд алдаа гарлаа: ${error.message}`);
-            }
-            return;
-          }
-
-          document.getElementById("registerForm").reset();
-          completeLogin(data);
-        } else {
-          if (users.some(u => u.phone === phone)) {
-            showAuthError("Энэ утасны дугаар аль хэдийн бүртгэгдсэн байна. Нэвтрэх хэсгээр орно уу.");
-            return;
-          }
-          const newUser = { id: Date.now(), name, phone, passwordHash, createdAt: new Date().toISOString() };
-          users.push(newUser);
-          localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(users));
-          document.getElementById("registerForm").reset();
-          completeLogin(newUser);
-        }
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Бүртгүүлэх";
-      }
-    }
-
-    async function handleLogin(event) {
-      event.preventDefault();
-      hideAuthError();
-
-      const phone = normalizePhone(document.getElementById("loginPhone").value);
-      const password = document.getElementById("loginPassword").value;
-
-      const submitBtn = document.getElementById("loginSubmitBtn");
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Нэвтэрч байна...";
-
-      try {
-        const passwordHash = await hashPassword(password);
-
-        if (sb) {
-          const { data, error } = await sb.rpc("login_user", {
-            p_phone: phone,
-            p_password_hash: passwordHash
-          });
-
-          if (error) { showAuthError(`Нэвтрэхэд алдаа гарлаа: ${error.message}`); return; }
-          if (!data) { showAuthError("Утасны дугаар эсвэл нууц үг буруу байна."); return; }
-
-          document.getElementById("loginForm").reset();
-          completeLogin(data);
-        } else {
-          const user = users.find(u => u.phone === phone);
-          if (!user || user.passwordHash !== passwordHash) {
-            showAuthError("Утасны дугаар эсвэл нууц үг буруу байна.");
-            return;
-          }
-          document.getElementById("loginForm").reset();
-          completeLogin(user);
-        }
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Нэвтрэх";
-      }
-    }
-
-    function completeLogin(user) {
-      currentUser = {
-        id: user.id,
-        name: user.name,
-        phone: user.phone,
-        isAdmin: Boolean(user.isAdmin),
-        mode: sb ? "cloud" : "local"
-      };
-      localStorage.setItem(STORAGE_KEYS.currentUser, JSON.stringify(currentUser));
-      updateAppView();
-    }
-
-    function logout() {
-      currentUser = null;
-      localStorage.removeItem(STORAGE_KEYS.currentUser);
-      closeModal();
-      document.getElementById("addListingForm").reset();
-      document.getElementById("searchInput").value = "";
-      selectedCategory = "Бүгд";
-      updateAppView();
-    }
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") closeModal();
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape") { closeModal(); closeSettings(); }
     });
 
     updateAppView();
