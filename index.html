@@ -236,7 +236,12 @@
     </div>
   </div>
 
-  <!-- 6. Мэдэгдэл (Toast) -->
+  <!-- 6. Сэтгэгдлийн цонх (Dedicated Comment View) -->
+  <div id="commentModal" onclick="if(event.target === this) closeComments()" class="fixed inset-0 bg-black/55 backdrop-blur-[1px] z-50 hidden items-center justify-center sm:p-4">
+    <div id="commentModalBody" class="bg-white w-full h-full sm:h-auto sm:max-h-[88vh] sm:max-w-xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"></div>
+  </div>
+
+  <!-- 7. Мэдэгдэл (Toast) -->
   <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] hidden items-center gap-2 bg-gray-900/95 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-full shadow-xl pointer-events-none"></div>
 
   <script>
@@ -275,7 +280,7 @@
 
     let selectedCategory = "Бүгд";
     let toastTimer = null;
-    const openCommentsSet = new Set();
+    let activeCommentListingId = null;
     const replyTargetByListing = {};
 
     const DEFAULT_LISTINGS = [
@@ -517,7 +522,7 @@
     function logout() {
       currentUser = null;
       localStorage.removeItem(STORAGE_KEYS.currentUser);
-      closeModal(); closeSettings();
+      closeModal(); closeSettings(); closeComments();
       document.getElementById("addListingForm").reset();
       document.getElementById("searchInput").value = "";
       document.getElementById("clearSearchBtn").classList.add("hidden");
@@ -758,7 +763,6 @@
         const itemReactions = reactions.filter(r => r.listingId === item.id);
         const myReaction = itemReactions.find(r => r.userId === currentUser.id)?.reaction || null;
         const itemComments = comments.filter(c => c.listingId === item.id);
-        const isCommentsOpen = openCommentsSet.has(item.id);
 
         return `
           <article class="p-4 rounded-2xl bg-white shadow-md hover:shadow-lg transition-all duration-200 ${item.isPinned ? 'border-2 border-amber-400 ring-1 ring-amber-200' : 'border border-gray-200/90'} flex flex-col justify-between">
@@ -814,75 +818,11 @@
                       </button>`;
                   }).join("")}
                 </div>
-                <button type="button" onclick="toggleComments(${item.id})"
-                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition cursor-pointer ${
-                    isCommentsOpen
-                      ? 'bg-emerald-700 text-white'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                  }">
+                <button type="button" onclick="openComments(${item.id})"
+                  class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200">
                   💬 Сэтгэгдэл (${itemComments.length})
                 </button>
               </div>
-
-              ${isCommentsOpen ? (() => {
-                const topComments = itemComments.filter(c => !c.parentId);
-                const replyTarget = replyTargetByListing[item.id] || null;
-                const renderCommentCard = (c, isReply = false) => {
-                  const canDelComment = c.authorId === currentUser.id || Boolean(currentUser.isAdmin);
-                  const threadParentId = c.parentId || c.id;
-                  const safeAuthor = escapeHtml(c.authorName).replace(/'/g, "\\'");
-                  return `
-                    <div class="${isReply ? 'bg-white border border-gray-200/80' : 'bg-gray-50 border border-gray-100'} rounded-xl px-3 py-2 text-xs">
-                      <div class="flex justify-between items-center gap-2 mb-0.5">
-                        <span class="font-bold text-gray-800">${escapeHtml(c.authorName)}</span>
-                        <div class="flex items-center gap-2">
-                          <span class="text-[10px] text-gray-400">${escapeHtml(c.createdAt)}</span>
-                          <button type="button" onclick="startReply(${item.id}, ${threadParentId}, '${safeAuthor}')"
-                            class="text-[11px] font-semibold text-emerald-700 hover:underline cursor-pointer">
-                            Хариулах
-                          </button>
-                          ${canDelComment ? `<button type="button" onclick="deleteComment(${item.id}, ${c.id})" title="Устгах" class="text-[11px] text-gray-400 hover:text-red-600 cursor-pointer">✕</button>` : ''}
-                        </div>
-                      </div>
-                      <p class="text-gray-700 whitespace-pre-line break-words leading-relaxed">${formatCommentContent(c.content)}</p>
-                    </div>`;
-                };
-
-                return `
-                  <div class="pt-2 space-y-2.5">
-                    ${itemComments.length === 0
-                      ? `<p class="text-xs text-gray-400 text-center py-2 bg-gray-50 rounded-xl">Одоогоор сэтгэгдэл алга. Анхны сэтгэгдлийг үлдээнэ үү!</p>`
-                      : `<div class="space-y-2 max-h-60 overflow-y-auto pr-1">
-                          ${topComments.map(c => {
-                            const replies = itemComments.filter(r => r.parentId === c.id);
-                            return `
-                              <div class="space-y-1.5">
-                                ${renderCommentCard(c, false)}
-                                ${replies.length > 0 ? `
-                                  <div class="ml-4 pl-2.5 border-l-2 border-emerald-200 space-y-1.5">
-                                    ${replies.map(r => renderCommentCard(r, true)).join("")}
-                                  </div>
-                                ` : ''}
-                              </div>`;
-                          }).join("")}
-                        </div>`
-                    }
-                    ${replyTarget ? `
-                      <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-medium">
-                        <span>↩️ <strong>@${escapeHtml(replyTarget.authorName)}</strong>-д хариулж байна</span>
-                        <button type="button" onclick="cancelReply(${item.id})" class="text-emerald-700 hover:text-red-600 font-bold cursor-pointer">✕</button>
-                      </div>
-                    ` : ''}
-                    <form onsubmit="handleAddComment(event, ${item.id})" class="flex gap-1.5">
-                      <input type="text" id="commentInput-${item.id}" required placeholder="${replyTarget ? `@${escapeHtml(replyTarget.authorName)} хариу бичих...` : 'Сэтгэгдэл бичих... (@нэр дурдах боломжтой)'}"
-                        class="flex-1 min-w-0 border border-gray-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600">
-                      <button type="submit"
-                        class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white text-xs font-bold rounded-xl cursor-pointer transition whitespace-nowrap">
-                        Илгээх
-                      </button>
-                    </form>
-                  </div>`;
-              })() : ''}
             </div>
           </article>`;
       }).join("");
@@ -970,16 +910,136 @@
     }
 
     // ── Reactions & Comments ─────────────────────────────────
-    function toggleComments(listingId) {
-      if (openCommentsSet.has(listingId)) {
-        openCommentsSet.delete(listingId);
-      } else {
-        openCommentsSet.add(listingId);
-      }
-      renderListings();
-      if (openCommentsSet.has(listingId)) {
-        setTimeout(() => document.getElementById(`commentInput-${listingId}`)?.focus(), 40);
-      }
+    function openComments(listingId) {
+      if (!currentUser) return;
+      activeCommentListingId = listingId;
+      renderCommentModal();
+      const m = document.getElementById("commentModal");
+      m.classList.remove("hidden");
+      m.classList.add("flex");
+      setTimeout(() => document.getElementById("modalCommentInput")?.focus(), 60);
+    }
+
+    function closeComments() {
+      activeCommentListingId = null;
+      const m = document.getElementById("commentModal");
+      m.classList.add("hidden");
+      m.classList.remove("flex");
+    }
+
+    function renderCommentModal() {
+      if (!activeCommentListingId || !currentUser) return;
+      const item = listings.find(l => l.id === activeCommentListingId);
+      if (!item) { closeComments(); return; }
+
+      const body = document.getElementById("commentModalBody");
+      const meta = CATEGORY_META[item.category] || { icon: "🏷️", badge: "bg-emerald-100 text-emerald-800" };
+      const itemReactions = reactions.filter(r => r.listingId === item.id);
+      const myReaction = itemReactions.find(r => r.userId === currentUser.id)?.reaction || null;
+      const itemComments = comments.filter(c => c.listingId === item.id);
+      const topComments = itemComments.filter(c => !c.parentId);
+      const replyTarget = replyTargetByListing[item.id] || null;
+
+      const renderCommentCard = (c, isReply = false) => {
+        const canDelComment = c.authorId === currentUser.id || Boolean(currentUser.isAdmin);
+        const threadParentId = c.parentId || c.id;
+        const safeAuthor = escapeHtml(c.authorName).replace(/'/g, "\\'");
+        return `
+          <div class="${isReply ? 'bg-emerald-50/40 border border-emerald-100' : 'bg-gray-50 border border-gray-200/70'} rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm">
+            <div class="flex justify-between items-center gap-2 mb-1">
+              <span class="font-bold text-gray-900">👤 ${escapeHtml(c.authorName)}</span>
+              <div class="flex items-center gap-2.5">
+                <span class="text-[11px] text-gray-400">${escapeHtml(c.createdAt)}</span>
+                <button type="button" onclick="startReply(${item.id}, ${threadParentId}, '${safeAuthor}')"
+                  class="text-[11px] font-semibold text-emerald-700 hover:underline cursor-pointer">
+                  Хариулах
+                </button>
+                ${canDelComment ? `<button type="button" onclick="deleteComment(${item.id}, ${c.id})" title="Устгах" class="text-xs text-gray-400 hover:text-red-600 cursor-pointer">✕</button>` : ''}
+              </div>
+            </div>
+            <p class="text-gray-700 whitespace-pre-line break-words leading-relaxed">${formatCommentContent(c.content)}</p>
+          </div>`;
+      };
+
+      body.innerHTML = `
+        <!-- Дээд толгой хэсэг: Зүүн дээд буланд Гарах / Буцах товч -->
+        <div class="bg-emerald-800 text-white px-3 sm:px-4 py-3 flex items-center justify-between gap-2 shrink-0">
+          <button type="button" onclick="closeComments()"
+            class="inline-flex items-center gap-1.5 bg-emerald-900/80 hover:bg-emerald-950 active:scale-95 text-white text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl cursor-pointer transition">
+            ← Буцах
+          </button>
+          <span class="text-sm sm:text-base font-bold truncate">💬 Сэтгэгдэл (${itemComments.length})</span>
+          <div class="w-16"></div>
+        </div>
+
+        <!-- Зарын товч мэдээлэл + Reaction -->
+        <div class="px-4 py-3 bg-gray-50 border-b border-gray-200 shrink-0 space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md ${meta.badge}">${meta.icon} ${escapeHtml(item.category)}</span>
+            <a href="tel:+976${escapeHtml(item.phone)}" class="text-xs font-bold text-emerald-700 hover:underline">📞 ${escapeHtml(item.phone)}</a>
+          </div>
+          <h4 class="text-sm sm:text-base font-bold text-gray-900 leading-snug">${escapeHtml(item.title)}</h4>
+          ${item.description ? `<p class="text-xs text-gray-600 line-clamp-2 whitespace-pre-line">${escapeHtml(item.description)}</p>` : ''}
+          <div class="flex items-center gap-1.5 flex-wrap pt-1">
+            ${REACTIONS.map(r => {
+              const count = itemReactions.filter(x => x.reaction === r.key).length;
+              const active = myReaction === r.key;
+              return `
+                <button type="button" onclick="toggleReaction(${item.id}, '${r.key}')" title="${r.label}"
+                  class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition cursor-pointer active:scale-95 ${
+                    active
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-400'
+                      : 'bg-white hover:bg-gray-100 text-gray-600 border border-gray-200'
+                  }">
+                  <span>${r.emoji}</span>
+                  ${count > 0 ? `<span>${count}</span>` : ''}
+                </button>`;
+            }).join("")}
+          </div>
+        </div>
+
+        <!-- Сэтгэгдлийн жагсаалт -->
+        <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
+          ${itemComments.length === 0
+            ? `<div class="text-center py-10 text-gray-400">
+                 <div class="text-3xl mb-2">💬</div>
+                 <p class="text-sm font-medium text-gray-500">Одоогоор сэтгэгдэл алга</p>
+                 <p class="text-xs text-gray-400 mt-1">Анхны сэтгэгдлийг доор бичиж үлдээнэ үү!</p>
+               </div>`
+            : topComments.map(c => {
+                const replies = itemComments.filter(r => r.parentId === c.id);
+                return `
+                  <div class="space-y-2">
+                    ${renderCommentCard(c, false)}
+                    ${replies.length > 0 ? `
+                      <div class="ml-4 sm:ml-6 pl-3 border-l-2 border-emerald-200 space-y-2">
+                        ${replies.map(r => renderCommentCard(r, true)).join("")}
+                      </div>
+                    ` : ''}
+                  </div>`;
+              }).join("")
+          }
+        </div>
+
+        <!-- Доод бичих хэсэг -->
+        <div class="p-3 sm:p-4 border-t border-gray-200 bg-gray-50 shrink-0 space-y-2">
+          ${replyTarget ? `
+            <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium">
+              <span>↩️ <strong>@${escapeHtml(replyTarget.authorName)}</strong>-д хариулж байна</span>
+              <button type="button" onclick="cancelReply(${item.id})" class="text-emerald-700 hover:text-red-600 font-bold cursor-pointer">✕</button>
+            </div>
+          ` : ''}
+          <form onsubmit="handleAddComment(event, ${item.id})" class="flex gap-2">
+            <input type="text" id="modalCommentInput" required
+              placeholder="${replyTarget ? `@${escapeHtml(replyTarget.authorName)} хариу бичих...` : 'Сэтгэгдэл бичих... (@нэр дурдах боломжтой)'}"
+              class="flex-1 min-w-0 border border-gray-300 bg-white rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
+            <button type="submit"
+              class="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white text-sm font-bold rounded-xl cursor-pointer transition whitespace-nowrap">
+              Илгээх
+            </button>
+          </form>
+        </div>
+      `;
     }
 
     async function toggleReaction(listingId, reactionKey) {
@@ -1021,14 +1081,14 @@
         localStorage.setItem(STORAGE_KEYS.reactions, JSON.stringify(reactions));
       }
       renderListings();
+      if (activeCommentListingId === listingId) renderCommentModal();
     }
 
     function startReply(listingId, parentId, authorName) {
-      openCommentsSet.add(listingId);
       replyTargetByListing[listingId] = { parentId, authorName };
-      renderListings();
+      renderCommentModal();
       setTimeout(() => {
-        const input = document.getElementById(`commentInput-${listingId}`);
+        const input = document.getElementById("modalCommentInput");
         if (!input) return;
         const mention = `@${authorName.replace(/\s+/g, "_")} `;
         if (!input.value.startsWith("@")) {
@@ -1041,19 +1101,18 @@
 
     function cancelReply(listingId) {
       delete replyTargetByListing[listingId];
-      renderListings();
+      renderCommentModal();
     }
 
     async function handleAddComment(event, listingId) {
       event.preventDefault();
       if (!currentUser) return;
-      const input = document.getElementById(`commentInput-${listingId}`);
-      const content = input.value.trim();
+      const input = document.getElementById("modalCommentInput");
+      const content = input ? input.value.trim() : "";
       if (!content) return;
 
       const replyTarget = replyTargetByListing[listingId] || null;
       const parentId = replyTarget ? replyTarget.parentId : null;
-      openCommentsSet.add(listingId);
 
       if (sb) {
         const payload = {
@@ -1086,6 +1145,7 @@
 
       delete replyTargetByListing[listingId];
       renderListings();
+      if (activeCommentListingId === listingId) renderCommentModal();
       showToast(parentId ? "↩️ Хариу нэмэгдлээ" : "💬 Сэтгэгдэл нэмэгдлээ");
     }
 
@@ -1105,11 +1165,12 @@
       } else {
         localStorage.setItem(
           STORAGE_KEYS.comments,
-          JSON.stringify(comments.filter(c => c.id !== commentId))
+          JSON.stringify(comments.filter(c => c.id !== commentId && c.parentId !== commentId))
         );
       }
       comments = comments.filter(c => c.id !== commentId && c.parentId !== commentId);
       renderListings();
+      if (activeCommentListingId === listingId) renderCommentModal();
       showToast("🗑️ Сэтгэгдэл устгагдлаа");
     }
 
@@ -1132,7 +1193,7 @@
     }
 
     document.addEventListener("keydown", e => {
-      if (e.key === "Escape") { closeModal(); closeSettings(); }
+      if (e.key === "Escape") { closeModal(); closeSettings(); closeComments(); }
     });
 
     updateAppView();
