@@ -14,6 +14,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' };
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
@@ -23,10 +26,55 @@
     @media (max-width: 768px) {
       body { background-attachment: scroll !important; }
     }
+
+    /* Dark mode surface & text overrides */
+    html.dark body { color: #e5e7eb; }
+    html.dark #bgOverlay { background-color: rgba(0, 0, 0, 0.55) !important; }
+    html.dark .bg-white,
+    html.dark .bg-white\/95,
+    html.dark .bg-white\/90 { background-color: rgba(17, 24, 39, 0.96) !important; color: #f3f4f6; }
+    html.dark .bg-gray-50 { background-color: #1f2937 !important; }
+    html.dark .bg-gray-100 { background-color: #374151 !important; }
+    html.dark .bg-emerald-50,
+    html.dark .bg-emerald-50\/70,
+    html.dark .bg-emerald-50\/40 { background-color: rgba(6, 78, 59, 0.35) !important; }
+    html.dark .bg-sky-50 { background-color: rgba(12, 74, 110, 0.35) !important; }
+    html.dark .bg-violet-50 { background-color: rgba(76, 29, 149, 0.35) !important; }
+    html.dark .bg-amber-50,
+    html.dark .bg-amber-50\/70 { background-color: rgba(120, 53, 15, 0.35) !important; }
+    html.dark .text-gray-900 { color: #f9fafb !important; }
+    html.dark .text-gray-800 { color: #e5e7eb !important; }
+    html.dark .text-gray-700 { color: #d1d5db !important; }
+    html.dark .text-gray-600 { color: #9ca3af !important; }
+    html.dark .text-gray-500 { color: #9ca3af !important; }
+    html.dark .text-emerald-900,
+    html.dark .text-emerald-800 { color: #6ee7b7 !important; }
+    html.dark .text-emerald-700 { color: #34d399 !important; }
+    html.dark .text-sky-900 { color: #bae6fd !important; }
+    html.dark .text-violet-900 { color: #ddd6fe !important; }
+    html.dark .text-amber-900 { color: #fde68a !important; }
+    html.dark .border-gray-100,
+    html.dark .border-gray-200,
+    html.dark .border-gray-200\/90,
+    html.dark .border-gray-200\/80,
+    html.dark .border-gray-200\/70,
+    html.dark .border-gray-300,
+    html.dark .border-white { border-color: #374151 !important; }
+    html.dark .border-emerald-100,
+    html.dark .border-emerald-200 { border-color: rgba(16, 185, 129, 0.35) !important; }
+    html.dark input,
+    html.dark select,
+    html.dark textarea {
+      background-color: #1f2937 !important;
+      color: #f9fafb !important;
+      border-color: #4b5563 !important;
+    }
+    html.dark input::placeholder,
+    html.dark textarea::placeholder { color: #9ca3af !important; }
   </style>
 </head>
 <body class="text-gray-800 pb-24 sm:pb-16 min-h-screen overflow-x-hidden" style="background-image: url('bg2.jpg'); background-size: cover; background-attachment: fixed; background-position: center;">
-  <div class="fixed inset-0 bg-black/10 -z-10 pointer-events-none"></div>
+  <div id="bgOverlay" class="fixed inset-0 bg-black/10 -z-10 pointer-events-none transition-colors duration-200"></div>
 
   <!-- 1. Толгой хэсэг (Header) -->
   <header class="bg-emerald-800/95 backdrop-blur-md text-white sticky top-0 z-10 shadow-lg border-b border-emerald-600/30">
@@ -228,6 +276,22 @@
         <h3 class="text-lg font-extrabold text-gray-900">⚙️ Тохиргоо</h3>
         <button onclick="closeSettings()" class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 text-lg font-bold cursor-pointer transition">✕</button>
       </div>
+
+      <!-- Харагдах байдал (Light / Dark mode) -->
+      <div class="mb-4 pb-4 border-b border-gray-100">
+        <label class="block text-xs font-semibold text-gray-700 mb-2">Харагдах горим</label>
+        <div class="grid grid-cols-2 gap-1.5 bg-gray-100 p-1 rounded-xl">
+          <button type="button" id="themeLightBtn" onclick="setTheme('light')"
+            class="py-2 text-xs sm:text-sm font-semibold rounded-lg transition cursor-pointer">
+            ☀️ Цайвар
+          </button>
+          <button type="button" id="themeDarkBtn" onclick="setTheme('dark')"
+            class="py-2 text-xs sm:text-sm font-semibold rounded-lg transition cursor-pointer">
+            🌙 Харанхуй
+          </button>
+        </div>
+      </div>
+
       <div id="settingsMsg" class="hidden mb-3 p-3 rounded-xl text-xs font-medium"></div>
       <form id="changeNameForm" onsubmit="handleChangeName(event)" class="space-y-3.5">
         <div>
@@ -638,10 +702,36 @@
       document.body.classList.toggle("modal-open", anyOpen);
     }
 
+    // ── Theme (Dark / Light) ─────────────────────────────────
+    const THEME_KEY = "buregkhangai_theme";
+
+    function applyTheme(mode) {
+      const isDark = mode === "dark";
+      document.documentElement.classList.toggle("dark", isDark);
+      updateThemeButtons(isDark);
+    }
+
+    function updateThemeButtons(isDark = document.documentElement.classList.contains("dark")) {
+      const lightBtn = document.getElementById("themeLightBtn");
+      const darkBtn = document.getElementById("themeDarkBtn");
+      if (!lightBtn || !darkBtn) return;
+      const active = "py-2 text-xs sm:text-sm font-bold rounded-lg transition cursor-pointer bg-emerald-700 text-white shadow-sm";
+      const inactive = "py-2 text-xs sm:text-sm font-semibold rounded-lg transition cursor-pointer text-gray-600 hover:text-gray-900";
+      lightBtn.className = isDark ? inactive : active;
+      darkBtn.className = isDark ? active : inactive;
+    }
+
+    function setTheme(mode) {
+      localStorage.setItem(THEME_KEY, mode);
+      applyTheme(mode);
+      showToast(mode === "dark" ? "🌙 Харанхуй горим идэвхжлээ" : "☀️ Цайвар горим идэвхжлээ");
+    }
+
     function openSettings() {
       if (!currentUser) return;
       document.getElementById("newDisplayName").value = currentUser.name;
       hideSettingsMsg();
+      updateThemeButtons();
       const m = document.getElementById("settingsModal");
       m.classList.remove("hidden"); m.classList.add("flex");
       syncBodyScrollLock();
@@ -1699,6 +1789,7 @@
       if (e.key === "Escape") { closeModal(); closeSettings(); closeComments(); closeProfile(); closeSharedListing(); closeAdminDashboard(); }
     });
 
+    applyTheme(localStorage.getItem(THEME_KEY) || "light");
     updateAppView();
     loadSharedListingForGuest();
   </script>
