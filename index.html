@@ -14,6 +14,7 @@
     body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    html.modal-open, body.modal-open { overflow: hidden !important; height: 100%; }
     @media (max-width: 768px) {
       body { background-attachment: scroll !important; }
     }
@@ -237,8 +238,13 @@
   </div>
 
   <!-- 6. Сэтгэгдлийн цонх (Dedicated Comment View) -->
-  <div id="commentModal" onclick="if(event.target === this) closeComments()" class="fixed inset-0 bg-black/55 backdrop-blur-[1px] z-50 hidden items-center justify-center sm:p-4">
+  <div id="commentModal" onclick="if(event.target === this) closeComments()" class="fixed inset-0 bg-black/55 backdrop-blur-[1px] z-50 hidden items-center justify-center sm:p-4 overscroll-none">
     <div id="commentModalBody" class="bg-white w-full h-full sm:h-auto sm:max-h-[88vh] sm:max-w-xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"></div>
+  </div>
+
+  <!-- 7. Хэрэглэгчийн профайл (Profile Modal) -->
+  <div id="profileModal" onclick="if(event.target === this) closeProfile()" class="fixed inset-0 bg-black/55 backdrop-blur-[1px] z-50 hidden items-center justify-center sm:p-4 overscroll-none">
+    <div id="profileModalBody" class="bg-white w-full h-full sm:h-auto sm:max-h-[88vh] sm:max-w-lg sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"></div>
   </div>
 
   <!-- 7. Мэдэгдэл (Toast) -->
@@ -281,6 +287,7 @@
     let selectedCategory = "Бүгд";
     let toastTimer = null;
     let activeCommentListingId = null;
+    let activeProfileUser = null;
     const replyTargetByListing = {};
 
     const DEFAULT_LISTINGS = [
@@ -522,7 +529,7 @@
     function logout() {
       currentUser = null;
       localStorage.removeItem(STORAGE_KEYS.currentUser);
-      closeModal(); closeSettings(); closeComments();
+      closeModal(); closeSettings(); closeComments(); closeProfile();
       document.getElementById("addListingForm").reset();
       document.getElementById("searchInput").value = "";
       document.getElementById("clearSearchBtn").classList.add("hidden");
@@ -544,11 +551,12 @@
         headerActions.classList.add("flex");
 
         authArea.innerHTML = `
-          <span class="text-xs sm:text-sm bg-emerald-900/60 border border-emerald-500/40 px-2.5 sm:px-3 py-1.5 rounded-xl font-medium inline-flex items-center gap-1.5">
+          <button type="button" onclick="openProfile(${currentUser.id})" title="Миний профайл"
+            class="text-xs sm:text-sm bg-emerald-900/60 hover:bg-emerald-900 border border-emerald-500/40 px-2.5 sm:px-3 py-1.5 rounded-xl font-medium inline-flex items-center gap-1.5 cursor-pointer transition">
             <span>👤</span>
             <span class="max-w-[100px] sm:max-w-[180px] truncate">${escapeHtml(currentUser.name)}</span>
             ${currentUser.isAdmin ? '<span class="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-amber-400 text-gray-900">Админ</span>' : ''}
-          </span>
+          </button>
           <button onclick="openSettings()" title="Тохиргоо"
             class="text-xs sm:text-sm bg-emerald-900/60 hover:bg-emerald-900 text-emerald-100 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl transition cursor-pointer">
             ⚙️
@@ -571,18 +579,29 @@
     }
 
     // ── Settings ─────────────────────────────────────────────
+    function syncBodyScrollLock() {
+      const anyOpen = ["listingModal", "settingsModal", "commentModal", "profileModal"].some(id => {
+        const el = document.getElementById(id);
+        return el && !el.classList.contains("hidden");
+      });
+      document.documentElement.classList.toggle("modal-open", anyOpen);
+      document.body.classList.toggle("modal-open", anyOpen);
+    }
+
     function openSettings() {
       if (!currentUser) return;
       document.getElementById("newDisplayName").value = currentUser.name;
       hideSettingsMsg();
       const m = document.getElementById("settingsModal");
       m.classList.remove("hidden"); m.classList.add("flex");
+      syncBodyScrollLock();
       setTimeout(() => document.getElementById("newDisplayName").focus(), 50);
     }
 
     function closeSettings() {
       const m = document.getElementById("settingsModal");
       m.classList.add("hidden"); m.classList.remove("flex");
+      syncBodyScrollLock();
     }
 
     function showSettingsMsg(msg, isSuccess) {
@@ -786,7 +805,10 @@
               <div class="flex flex-wrap justify-between items-center gap-2">
                 <div class="min-w-0">
                   <span class="font-extrabold text-emerald-700 text-sm sm:text-base">${escapeHtml(item.price)}</span>
-                  <span class="block text-[11px] text-gray-400 truncate">👤 ${escapeHtml(item.authorName || "Хэрэглэгч")}</span>
+                  ${item.authorId
+                    ? `<button type="button" onclick="openProfile(${item.authorId}, '${escapeHtml(item.authorName || "Хэрэглэгч").replace(/'/g, "\\'")}')" class="block text-[11px] text-gray-500 hover:text-emerald-700 hover:underline truncate cursor-pointer text-left">👤 ${escapeHtml(item.authorName || "Хэрэглэгч")}</button>`
+                    : `<span class="block text-[11px] text-gray-400 truncate">👤 ${escapeHtml(item.authorName || "Хэрэглэгч")}</span>`
+                  }
                 </div>
                 <div class="flex items-center gap-1.5">
                   <button type="button" onclick="copyPhone('${escapeHtml(item.phone)}')" title="Дугаар хуулах"
@@ -917,6 +939,7 @@
       const m = document.getElementById("commentModal");
       m.classList.remove("hidden");
       m.classList.add("flex");
+      syncBodyScrollLock();
       setTimeout(() => document.getElementById("modalCommentInput")?.focus(), 60);
     }
 
@@ -925,6 +948,7 @@
       const m = document.getElementById("commentModal");
       m.classList.add("hidden");
       m.classList.remove("flex");
+      syncBodyScrollLock();
     }
 
     function renderCommentModal() {
@@ -999,7 +1023,7 @@
         </div>
 
         <!-- Сэтгэгдлийн жагсаалт -->
-        <div class="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
+        <div class="flex-1 overflow-y-auto overscroll-contain p-4 space-y-3 bg-white">
           ${itemComments.length === 0
             ? `<div class="text-center py-10 text-gray-400">
                  <div class="text-3xl mb-2">💬</div>
@@ -1181,6 +1205,7 @@
       if (!phoneField.value) phoneField.value = currentUser.phone;
       const m = document.getElementById("listingModal");
       m.classList.remove("hidden"); m.classList.add("flex");
+      syncBodyScrollLock();
       setTimeout(() => document.getElementById("newTitle").focus(), 50);
     }
 
@@ -1190,10 +1215,171 @@
       m.classList.add("hidden"); m.classList.remove("flex");
       document.getElementById("newExpiryPreset").value = "";
       document.getElementById("newExpiryDate").value = "";
+      syncBodyScrollLock();
+    }
+
+    // ── Profile ──────────────────────────────────────────────
+    function openProfile(userId, fallbackName = "") {
+      if (!currentUser) return;
+      const isMe = userId === currentUser.id;
+      const fromListing = listings.find(l => l.authorId === userId);
+      const fromComment = comments.find(c => c.authorId === userId);
+      const name = isMe
+        ? currentUser.name
+        : (fallbackName || fromListing?.authorName || fromComment?.authorName || "Хэрэглэгч");
+
+      activeProfileUser = {
+        id: userId,
+        name,
+        phone: isMe ? currentUser.phone : (fromListing?.phone || ""),
+        isAdmin: isMe ? Boolean(currentUser.isAdmin) : false
+      };
+      renderProfileModal();
+      const m = document.getElementById("profileModal");
+      m.classList.remove("hidden");
+      m.classList.add("flex");
+      syncBodyScrollLock();
+    }
+
+    function closeProfile() {
+      activeProfileUser = null;
+      const m = document.getElementById("profileModal");
+      m.classList.add("hidden");
+      m.classList.remove("flex");
+      syncBodyScrollLock();
+    }
+
+    function getInitials(name) {
+      const parts = String(name || "Х").trim().split(/\s+/);
+      if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+      return String(name || "Х").slice(0, 2).toUpperCase();
+    }
+
+    function renderProfileModal() {
+      if (!activeProfileUser || !currentUser) return;
+      const body = document.getElementById("profileModalBody");
+      const isMe = activeProfileUser.id === currentUser.id;
+      const userListings = listings.filter(l => {
+        if (l.authorId !== activeProfileUser.id) return false;
+        const canDelete = isMe || Boolean(currentUser.isAdmin);
+        return !isExpired(l.expiresAt) || canDelete;
+      });
+      const userCommentCount = comments.filter(c => c.authorId === activeProfileUser.id).length;
+
+      body.innerHTML = `
+        <div class="bg-emerald-800 text-white px-3 sm:px-4 py-3 flex items-center justify-between gap-2 shrink-0">
+          <button type="button" onclick="closeProfile()"
+            class="inline-flex items-center gap-1.5 bg-emerald-900/80 hover:bg-emerald-950 active:scale-95 text-white text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl cursor-pointer transition">
+            ← Буцах
+          </button>
+          <span class="text-sm sm:text-base font-bold truncate">${isMe ? "👤 Миний профайл" : "👤 Хэрэглэгчийн профайл"}</span>
+          <div class="w-16"></div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4 bg-white">
+          <!-- Хэрэглэгчийн карт -->
+          <div class="flex items-center gap-3.5 p-4 rounded-2xl bg-emerald-50/70 border border-emerald-100">
+            <div class="w-14 h-14 rounded-2xl bg-emerald-700 text-white font-extrabold text-lg flex items-center justify-center shadow-sm shrink-0">
+              ${escapeHtml(getInitials(activeProfileUser.name))}
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-base sm:text-lg font-extrabold text-gray-900 truncate">${escapeHtml(activeProfileUser.name)}</h3>
+                ${activeProfileUser.isAdmin ? '<span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-amber-400 text-gray-900">Админ</span>' : ''}
+              </div>
+              ${activeProfileUser.phone ? `<p class="text-xs text-gray-600 mt-0.5">📞 ${escapeHtml(activeProfileUser.phone)}</p>` : ''}
+              <div class="flex items-center gap-3 mt-2 text-xs font-semibold text-emerald-800">
+                <span class="bg-white px-2.5 py-1 rounded-lg border border-emerald-100 shadow-2xs">📋 ${userListings.length} зар</span>
+                <span class="bg-white px-2.5 py-1 rounded-lg border border-emerald-100 shadow-2xs">💬 ${userCommentCount} сэтгэгдэл</span>
+              </div>
+            </div>
+          </div>
+
+          ${isMe ? `
+            <!-- Өөрийн нэр засах -->
+            <form onsubmit="handleProfileChangeName(event)" class="p-3.5 rounded-2xl bg-gray-50 border border-gray-200/80 space-y-2">
+              <label class="block text-xs font-semibold text-gray-700">Нэр өөрчлөх</label>
+              <div class="flex gap-2">
+                <input type="text" id="profileDisplayName" required value="${escapeHtml(currentUser.name)}"
+                  class="flex-1 min-w-0 border border-gray-300 bg-white rounded-xl px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
+                <button type="submit" id="profileSaveNameBtn"
+                  class="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white text-xs sm:text-sm font-bold rounded-xl cursor-pointer transition whitespace-nowrap">
+                  Хадгалах
+                </button>
+              </div>
+            </form>
+          ` : ''}
+
+          <!-- Оруулсан зарууд -->
+          <div>
+            <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2.5">
+              ${isMe ? "Миний оруулсан зарууд" : "Оруулсан зарууд"} (${userListings.length})
+            </h4>
+            ${userListings.length === 0
+              ? `<div class="text-center py-8 bg-gray-50 rounded-2xl border border-gray-100 text-gray-400 text-xs">
+                   Одоогоор зар оруулаагүй байна.
+                 </div>`
+              : `<div class="space-y-2.5">
+                   ${userListings.map(item => {
+                     const meta = CATEGORY_META[item.category] || { icon: "🏷️", badge: "bg-emerald-100 text-emerald-800" };
+                     return `
+                       <div class="p-3 rounded-xl bg-white border border-gray-200 shadow-2xs flex justify-between items-start gap-2">
+                         <div class="min-w-0 flex-1">
+                           <div class="flex items-center gap-1.5 mb-1 flex-wrap">
+                             <span class="text-[10px] font-semibold px-2 py-0.5 rounded ${meta.badge}">${meta.icon} ${escapeHtml(item.category)}</span>
+                             <span class="text-[10px] text-gray-400">${escapeHtml(item.createdAt)}</span>
+                           </div>
+                           <p class="text-xs sm:text-sm font-bold text-gray-900 truncate">${escapeHtml(item.title)}</p>
+                           <span class="text-xs font-bold text-emerald-700">${escapeHtml(item.price)}</span>
+                         </div>
+                         <button type="button" onclick="closeProfile(); openComments(${item.id});"
+                           class="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-semibold cursor-pointer whitespace-nowrap transition">
+                           Харах →
+                         </button>
+                       </div>`;
+                   }).join("")}
+                 </div>`
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    async function handleProfileChangeName(event) {
+      event.preventDefault();
+      if (!currentUser) return;
+      const input = document.getElementById("profileDisplayName");
+      const newName = input ? input.value.trim() : "";
+      if (!newName) return;
+
+      const btn = document.getElementById("profileSaveNameBtn");
+      btn.disabled = true; btn.textContent = "Хадгалж байна...";
+
+      try {
+        if (sb) {
+          const { error } = await sb.rpc("change_name", {
+            p_user_id: currentUser.id, p_new_name: newName
+          });
+          if (error) { showToast(`❌ Алдаа: ${error.message}`); return; }
+        } else {
+          const user = users.find(u => u.id === currentUser.id);
+          if (user) { user.name = newName; localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(users)); }
+        }
+        currentUser.name = newName;
+        localStorage.setItem(STORAGE_KEYS.currentUser, JSON.stringify(currentUser));
+        if (activeProfileUser && activeProfileUser.id === currentUser.id) {
+          activeProfileUser.name = newName;
+        }
+        updateAppView();
+        renderProfileModal();
+        showToast("✅ Нэр шинэчлэгдлээ");
+      } finally {
+        btn.disabled = false; btn.textContent = "Хадгалах";
+      }
     }
 
     document.addEventListener("keydown", e => {
-      if (e.key === "Escape") { closeModal(); closeSettings(); closeComments(); }
+      if (e.key === "Escape") { closeModal(); closeSettings(); closeComments(); closeProfile(); }
     });
 
     updateAppView();
