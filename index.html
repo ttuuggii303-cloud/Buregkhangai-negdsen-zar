@@ -960,7 +960,8 @@
           p_reaction: reactionKey
         });
         if (error) {
-          showToast("❌ Supabase дээр reaction хүснэгт/функц үүсгэнэ үү.");
+          console.error("Reaction error:", error);
+          showToast(`❌ Алдаа: ${error.message}`);
           return;
         }
         if (existingIdx !== -1) reactions.splice(existingIdx, 1);
@@ -1005,7 +1006,8 @@
         }).select().single();
 
         if (error) {
-          showToast("❌ Supabase дээр comment хүснэгт үүсгэнэ үү.");
+          console.error("Comment error:", error);
+          showToast(`❌ Сэтгэгдлийн алдаа: ${error.message}`);
           return;
         }
         comments.push({
