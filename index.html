@@ -276,6 +276,7 @@
     let selectedCategory = "Бүгд";
     let toastTimer = null;
     const openCommentsSet = new Set();
+    const replyTargetByListing = {};
 
     const DEFAULT_LISTINGS = [
       {
@@ -313,6 +314,12 @@
       return String(text ?? "")
         .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    function formatCommentContent(text) {
+      const escaped = escapeHtml(text);
+      return escaped.replace(/(^|\s)(@[\p{L}\p{N}._-]+)/gu,
+        '$1<span class="font-semibold text-emerald-700 bg-emerald-50 px-1 rounded">$2</span>');
     }
 
     function showToast(msg) {
@@ -653,9 +660,9 @@
         }
         listings = (listingsRes.data || []).map(normalizeListingRow);
         comments = commentsRes.error ? [] : (commentsRes.data || []).map(c => ({
-          id: c.id, listingId: c.listing_id, authorId: c.author_id,
-          authorName: c.author_name || "Хэрэглэгч", content: c.content,
-          createdAt: formatTimeAgo(c.created_at)
+          id: c.id, listingId: c.listing_id, parentId: c.parent_id || null,
+          authorId: c.author_id, authorName: c.author_name || "Хэрэглэгч",
+          content: c.content, createdAt: formatTimeAgo(c.created_at)
         }));
         reactions = reactionsRes.error ? [] : (reactionsRes.data || []).map(r => ({
           id: r.id, listingId: r.listing_id, userId: r.user_id, reaction: r.reaction
@@ -817,37 +824,65 @@
                 </button>
               </div>
 
-              ${isCommentsOpen ? `
-                <div class="pt-2 space-y-2.5">
-                  ${itemComments.length === 0
-                    ? `<p class="text-xs text-gray-400 text-center py-2 bg-gray-50 rounded-xl">Одоогоор сэтгэгдэл алга. Анхны сэтгэгдлийг үлдээнэ үү!</p>`
-                    : `<div class="space-y-2 max-h-52 overflow-y-auto pr-1">
-                        ${itemComments.map(c => {
-                          const canDelComment = c.authorId === currentUser.id || Boolean(currentUser.isAdmin);
-                          return `
-                            <div class="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 text-xs">
-                              <div class="flex justify-between items-center gap-2 mb-0.5">
-                                <span class="font-bold text-gray-800">${escapeHtml(c.authorName)}</span>
-                                <div class="flex items-center gap-1.5">
-                                  <span class="text-[10px] text-gray-400">${escapeHtml(c.createdAt)}</span>
-                                  ${canDelComment ? `<button type="button" onclick="deleteComment(${item.id}, ${c.id})" title="Устгах" class="text-[11px] text-gray-400 hover:text-red-600 cursor-pointer">✕</button>` : ''}
-                                </div>
-                              </div>
-                              <p class="text-gray-700 whitespace-pre-line break-words leading-relaxed">${escapeHtml(c.content)}</p>
-                            </div>`;
-                        }).join("")}
-                      </div>`
-                  }
-                  <form onsubmit="handleAddComment(event, ${item.id})" class="flex gap-1.5">
-                    <input type="text" id="commentInput-${item.id}" required placeholder="Сэтгэгдэл бичих..."
-                      class="flex-1 min-w-0 border border-gray-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600">
-                    <button type="submit"
-                      class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white text-xs font-bold rounded-xl cursor-pointer transition whitespace-nowrap">
-                      Илгээх
-                    </button>
-                  </form>
-                </div>
-              ` : ''}
+              ${isCommentsOpen ? (() => {
+                const topComments = itemComments.filter(c => !c.parentId);
+                const replyTarget = replyTargetByListing[item.id] || null;
+                const renderCommentCard = (c, isReply = false) => {
+                  const canDelComment = c.authorId === currentUser.id || Boolean(currentUser.isAdmin);
+                  const threadParentId = c.parentId || c.id;
+                  const safeAuthor = escapeHtml(c.authorName).replace(/'/g, "\\'");
+                  return `
+                    <div class="${isReply ? 'bg-white border border-gray-200/80' : 'bg-gray-50 border border-gray-100'} rounded-xl px-3 py-2 text-xs">
+                      <div class="flex justify-between items-center gap-2 mb-0.5">
+                        <span class="font-bold text-gray-800">${escapeHtml(c.authorName)}</span>
+                        <div class="flex items-center gap-2">
+                          <span class="text-[10px] text-gray-400">${escapeHtml(c.createdAt)}</span>
+                          <button type="button" onclick="startReply(${item.id}, ${threadParentId}, '${safeAuthor}')"
+                            class="text-[11px] font-semibold text-emerald-700 hover:underline cursor-pointer">
+                            Хариулах
+                          </button>
+                          ${canDelComment ? `<button type="button" onclick="deleteComment(${item.id}, ${c.id})" title="Устгах" class="text-[11px] text-gray-400 hover:text-red-600 cursor-pointer">✕</button>` : ''}
+                        </div>
+                      </div>
+                      <p class="text-gray-700 whitespace-pre-line break-words leading-relaxed">${formatCommentContent(c.content)}</p>
+                    </div>`;
+                };
+
+                return `
+                  <div class="pt-2 space-y-2.5">
+                    ${itemComments.length === 0
+                      ? `<p class="text-xs text-gray-400 text-center py-2 bg-gray-50 rounded-xl">Одоогоор сэтгэгдэл алга. Анхны сэтгэгдлийг үлдээнэ үү!</p>`
+                      : `<div class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                          ${topComments.map(c => {
+                            const replies = itemComments.filter(r => r.parentId === c.id);
+                            return `
+                              <div class="space-y-1.5">
+                                ${renderCommentCard(c, false)}
+                                ${replies.length > 0 ? `
+                                  <div class="ml-4 pl-2.5 border-l-2 border-emerald-200 space-y-1.5">
+                                    ${replies.map(r => renderCommentCard(r, true)).join("")}
+                                  </div>
+                                ` : ''}
+                              </div>`;
+                          }).join("")}
+                        </div>`
+                    }
+                    ${replyTarget ? `
+                      <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-medium">
+                        <span>↩️ <strong>@${escapeHtml(replyTarget.authorName)}</strong>-д хариулж байна</span>
+                        <button type="button" onclick="cancelReply(${item.id})" class="text-emerald-700 hover:text-red-600 font-bold cursor-pointer">✕</button>
+                      </div>
+                    ` : ''}
+                    <form onsubmit="handleAddComment(event, ${item.id})" class="flex gap-1.5">
+                      <input type="text" id="commentInput-${item.id}" required placeholder="${replyTarget ? `@${escapeHtml(replyTarget.authorName)} хариу бичих...` : 'Сэтгэгдэл бичих... (@нэр дурдах боломжтой)'}"
+                        class="flex-1 min-w-0 border border-gray-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600">
+                      <button type="submit"
+                        class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white text-xs font-bold rounded-xl cursor-pointer transition whitespace-nowrap">
+                        Илгээх
+                      </button>
+                    </form>
+                  </div>`;
+              })() : ''}
             </div>
           </article>`;
       }).join("");
@@ -988,6 +1023,27 @@
       renderListings();
     }
 
+    function startReply(listingId, parentId, authorName) {
+      openCommentsSet.add(listingId);
+      replyTargetByListing[listingId] = { parentId, authorName };
+      renderListings();
+      setTimeout(() => {
+        const input = document.getElementById(`commentInput-${listingId}`);
+        if (!input) return;
+        const mention = `@${authorName.replace(/\s+/g, "_")} `;
+        if (!input.value.startsWith("@")) {
+          input.value = mention + input.value;
+        }
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+      }, 40);
+    }
+
+    function cancelReply(listingId) {
+      delete replyTargetByListing[listingId];
+      renderListings();
+    }
+
     async function handleAddComment(event, listingId) {
       event.preventDefault();
       if (!currentUser) return;
@@ -995,15 +1051,20 @@
       const content = input.value.trim();
       if (!content) return;
 
+      const replyTarget = replyTargetByListing[listingId] || null;
+      const parentId = replyTarget ? replyTarget.parentId : null;
       openCommentsSet.add(listingId);
 
       if (sb) {
-        const { data, error } = await sb.from("listing_comments").insert({
+        const payload = {
           listing_id: listingId,
           author_id: currentUser.id,
           author_name: currentUser.name,
           content
-        }).select().single();
+        };
+        if (parentId) payload.parent_id = parentId;
+
+        const { data, error } = await sb.from("listing_comments").insert(payload).select().single();
 
         if (error) {
           console.error("Comment error:", error);
@@ -1011,20 +1072,21 @@
           return;
         }
         comments.push({
-          id: data.id, listingId: data.listing_id, authorId: data.author_id,
-          authorName: data.author_name, content: data.content,
-          createdAt: formatTimeAgo(data.created_at)
+          id: data.id, listingId: data.listing_id, parentId: data.parent_id || null,
+          authorId: data.author_id, authorName: data.author_name,
+          content: data.content, createdAt: formatTimeAgo(data.created_at)
         });
       } else {
         comments.push({
-          id: Date.now(), listingId, authorId: currentUser.id,
+          id: Date.now(), listingId, parentId, authorId: currentUser.id,
           authorName: currentUser.name, content, createdAt: "Дөнгөж сая"
         });
         localStorage.setItem(STORAGE_KEYS.comments, JSON.stringify(comments));
       }
 
+      delete replyTargetByListing[listingId];
       renderListings();
-      showToast("💬 Сэтгэгдэл нэмэгдлээ");
+      showToast(parentId ? "↩️ Хариу нэмэгдлээ" : "💬 Сэтгэгдэл нэмэгдлээ");
     }
 
     async function deleteComment(listingId, commentId) {
@@ -1046,7 +1108,7 @@
           JSON.stringify(comments.filter(c => c.id !== commentId))
         );
       }
-      comments = comments.filter(c => c.id !== commentId);
+      comments = comments.filter(c => c.id !== commentId && c.parentId !== commentId);
       renderListings();
       showToast("🗑️ Сэтгэгдэл устгагдлаа");
     }
