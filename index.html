@@ -257,6 +257,11 @@
     <div id="sharedListingBody" class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto overscroll-contain"></div>
   </div>
 
+  <!-- 9. Админ самбар (Admin Dashboard) -->
+  <div id="adminModal" onclick="if(event.target === this) closeAdminDashboard()" class="fixed inset-0 bg-black/55 backdrop-blur-[1px] z-50 hidden items-center justify-center sm:p-4 overscroll-none">
+    <div id="adminModalBody" class="bg-white w-full h-full sm:h-auto sm:max-h-[88vh] sm:max-w-2xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden"></div>
+  </div>
+
   <!-- 7. Мэдэгдэл (Toast) -->
   <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] hidden items-center gap-2 bg-gray-900/95 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-full shadow-xl pointer-events-none"></div>
 
@@ -298,6 +303,7 @@
     let toastTimer = null;
     let activeCommentListingId = null;
     let activeProfileUser = null;
+    let adminStatsCache = null;
     let pendingSharedZarId = new URLSearchParams(window.location.search).get("zar");
     const replyTargetByListing = {};
 
@@ -565,8 +571,9 @@
 
     function logout() {
       currentUser = null;
+      adminStatsCache = null;
       localStorage.removeItem(STORAGE_KEYS.currentUser);
-      closeModal(); closeSettings(); closeComments(); closeProfile();
+      closeModal(); closeSettings(); closeComments(); closeProfile(); closeAdminDashboard();
       document.getElementById("addListingForm").reset();
       document.getElementById("searchInput").value = "";
       document.getElementById("clearSearchBtn").classList.add("hidden");
@@ -594,6 +601,12 @@
             <span class="max-w-[100px] sm:max-w-[180px] truncate">${escapeHtml(currentUser.name)}</span>
             ${currentUser.isAdmin ? '<span class="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-amber-400 text-gray-900">Админ</span>' : ''}
           </button>
+          ${currentUser.isAdmin ? `
+            <button type="button" onclick="openAdminDashboard()" title="Админ самбар"
+              class="text-xs sm:text-sm bg-amber-400/95 hover:bg-amber-300 text-gray-900 font-bold px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap">
+              📊<span class="hidden sm:inline"> Статистик</span>
+            </button>
+          ` : ''}
           <button onclick="openSettings()" title="Тохиргоо"
             class="text-xs sm:text-sm bg-emerald-900/60 hover:bg-emerald-900 text-emerald-100 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl transition cursor-pointer">
             ⚙️
@@ -617,7 +630,7 @@
 
     // ── Settings ─────────────────────────────────────────────
     function syncBodyScrollLock() {
-      const anyOpen = ["listingModal", "settingsModal", "commentModal", "profileModal", "sharedListingModal"].some(id => {
+      const anyOpen = ["listingModal", "settingsModal", "commentModal", "profileModal", "sharedListingModal", "adminModal"].some(id => {
         const el = document.getElementById(id);
         return el && !el.classList.contains("hidden");
       });
@@ -1512,8 +1525,178 @@
       syncBodyScrollLock();
     }
 
+    // ── Admin Dashboard ──────────────────────────────────────
+    async function openAdminDashboard() {
+      if (!currentUser || !currentUser.isAdmin) return;
+      const m = document.getElementById("adminModal");
+      const body = document.getElementById("adminModalBody");
+      m.classList.remove("hidden");
+      m.classList.add("flex");
+      syncBodyScrollLock();
+
+      body.innerHTML = `
+        <div class="bg-emerald-800 text-white px-3 sm:px-4 py-3 flex items-center justify-between gap-2 shrink-0">
+          <button type="button" onclick="closeAdminDashboard()"
+            class="inline-flex items-center gap-1.5 bg-emerald-900/80 hover:bg-emerald-950 text-white text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl cursor-pointer transition">
+            ← Буцах
+          </button>
+          <span class="text-sm sm:text-base font-bold">📊 Админ самбар</span>
+          <div class="w-16"></div>
+        </div>
+        <div class="p-8 text-center text-sm text-gray-500">Мэдээлэл ачаалж байна...</div>
+      `;
+
+      await fetchAdminStats();
+      renderAdminDashboard();
+    }
+
+    function closeAdminDashboard() {
+      const m = document.getElementById("adminModal");
+      if (!m) return;
+      m.classList.add("hidden");
+      m.classList.remove("flex");
+      syncBodyScrollLock();
+    }
+
+    async function fetchAdminStats() {
+      if (!currentUser || !currentUser.isAdmin) return;
+      if (sb) {
+        const { data, error } = await sb.rpc("get_admin_stats", { p_admin_id: currentUser.id });
+        if (error) {
+          adminStatsCache = { error: error.message };
+          return;
+        }
+        adminStatsCache = data;
+      } else {
+        const now = Date.now();
+        const activeListings = listings.filter(l => !isExpired(l.expiresAt)).length;
+        adminStatsCache = {
+          total_users: users.length,
+          new_users_24h: users.filter(u => u.createdAt && (now - new Date(u.createdAt).getTime()) < 86400000).length,
+          new_users_7d: users.filter(u => u.createdAt && (now - new Date(u.createdAt).getTime()) < 7 * 86400000).length,
+          total_listings: listings.length,
+          active_listings: activeListings,
+          total_comments: comments.length,
+          total_reactions: reactions.length,
+          users: [...users].reverse()
+        };
+      }
+    }
+
+    function renderAdminDashboard(searchQuery = "") {
+      const body = document.getElementById("adminModalBody");
+      if (!body || !currentUser || !currentUser.isAdmin) return;
+
+      if (!adminStatsCache || adminStatsCache.error) {
+        body.innerHTML = `
+          <div class="bg-emerald-800 text-white px-3 sm:px-4 py-3 flex items-center justify-between gap-2 shrink-0">
+            <button type="button" onclick="closeAdminDashboard()"
+              class="inline-flex items-center gap-1.5 bg-emerald-900/80 hover:bg-emerald-950 text-white text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl cursor-pointer transition">
+              ← Буцах
+            </button>
+            <span class="text-sm sm:text-base font-bold">📊 Админ самбар</span>
+            <div class="w-16"></div>
+          </div>
+          <div class="p-6 text-center space-y-2">
+            <p class="text-sm font-semibold text-red-600">Алдаа: ${escapeHtml(adminStatsCache?.error || "Мэдээлэл олдсонгүй")}</p>
+            <p class="text-xs text-gray-500">Supabase дээр <code>get_admin_stats</code> SQL функцээ ажиллуулсан эсэхээ шалгана уу.</p>
+          </div>`;
+        return;
+      }
+
+      const s = adminStatsCache;
+      const allUsers = Array.isArray(s.users) ? s.users : [];
+      const q = searchQuery.trim().toLowerCase();
+      const filteredUsers = q
+        ? allUsers.filter(u => (u.name || "").toLowerCase().includes(q) || (u.phone || "").toLowerCase().includes(q))
+        : allUsers;
+
+      body.innerHTML = `
+        <div class="bg-emerald-800 text-white px-3 sm:px-4 py-3 flex items-center justify-between gap-2 shrink-0">
+          <button type="button" onclick="closeAdminDashboard()"
+            class="inline-flex items-center gap-1.5 bg-emerald-900/80 hover:bg-emerald-950 active:scale-95 text-white text-xs sm:text-sm font-semibold px-3 py-1.5 rounded-xl cursor-pointer transition">
+            ← Буцах
+          </button>
+          <span class="text-sm sm:text-base font-bold truncate">📊 Админ самбар</span>
+          <button type="button" onclick="openAdminDashboard()"
+            class="inline-flex items-center gap-1 bg-emerald-900/80 hover:bg-emerald-950 text-white text-xs font-semibold px-2.5 py-1.5 rounded-xl cursor-pointer transition">
+            ↻ Шинэчлэх
+          </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-4 bg-white">
+          <!-- Гол тоон үзүүлэлтүүд -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div class="p-3 rounded-2xl bg-emerald-50 border border-emerald-100">
+              <div class="text-[11px] font-semibold text-emerald-700">👥 Нийт хэрэглэгч</div>
+              <div class="text-xl sm:text-2xl font-extrabold text-emerald-900 mt-0.5">${s.total_users ?? 0}</div>
+              <div class="text-[10px] text-emerald-600 mt-0.5">+${s.new_users_24h ?? 0} өнөөдөр • +${s.new_users_7d ?? 0} (7 хоног)</div>
+            </div>
+            <div class="p-3 rounded-2xl bg-sky-50 border border-sky-100">
+              <div class="text-[11px] font-semibold text-sky-700">📋 Нийт зар</div>
+              <div class="text-xl sm:text-2xl font-extrabold text-sky-900 mt-0.5">${s.total_listings ?? 0}</div>
+              <div class="text-[10px] text-sky-600 mt-0.5">${s.active_listings ?? 0} идэвхтэй</div>
+            </div>
+            <div class="p-3 rounded-2xl bg-violet-50 border border-violet-100">
+              <div class="text-[11px] font-semibold text-violet-700">💬 Сэтгэгдэл</div>
+              <div class="text-xl sm:text-2xl font-extrabold text-violet-900 mt-0.5">${s.total_comments ?? 0}</div>
+            </div>
+            <div class="p-3 rounded-2xl bg-amber-50 border border-amber-100">
+              <div class="text-[11px] font-semibold text-amber-700">👍 Reaction</div>
+              <div class="text-xl sm:text-2xl font-extrabold text-amber-900 mt-0.5">${s.total_reactions ?? 0}</div>
+            </div>
+          </div>
+
+          <!-- Хэрэглэгч хайх -->
+          <div class="space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h4 class="text-xs font-bold uppercase tracking-wide text-gray-500">
+                Бүртгэлтэй хэрэглэгчид (${filteredUsers.length})
+              </h4>
+              <input type="text" value="${escapeHtml(searchQuery)}" oninput="renderAdminDashboard(this.value)"
+                placeholder="Нэр эсвэл утас хайх..."
+                class="w-full sm:w-56 border border-gray-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600">
+            </div>
+
+            ${filteredUsers.length === 0
+              ? `<div class="text-center py-8 bg-gray-50 rounded-2xl text-xs text-gray-400">Тохирох хэрэглэгч олдсонгүй.</div>`
+              : `<div class="space-y-2">
+                   ${filteredUsers.map((u, idx) => {
+                     const userListingCount = listings.filter(l => l.authorId === u.id).length;
+                     const joinedText = u.created_at ? formatTimeAgo(u.created_at) : (u.createdAt ? formatTimeAgo(u.createdAt) : "");
+                     return `
+                       <div class="p-3 rounded-xl bg-gray-50 border border-gray-200/80 flex items-center justify-between gap-2">
+                         <div class="flex items-center gap-2.5 min-w-0">
+                           <span class="w-7 h-7 rounded-lg bg-emerald-700 text-white text-xs font-bold flex items-center justify-center shrink-0">
+                             ${idx + 1}
+                           </span>
+                           <div class="min-w-0">
+                             <div class="flex items-center gap-1.5 flex-wrap">
+                               <span class="text-xs sm:text-sm font-bold text-gray-900 truncate">${escapeHtml(u.name)}</span>
+                               ${u.is_admin || u.isAdmin ? '<span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-amber-400 text-gray-900">Админ</span>' : ''}
+                             </div>
+                             <div class="text-[11px] text-gray-500 flex items-center gap-2 flex-wrap">
+                               <span>📞 ${escapeHtml(u.phone)}</span>
+                               ${joinedText ? `<span>• 🕒 ${escapeHtml(joinedText)}</span>` : ''}
+                               <span>• 📋 ${userListingCount} зар</span>
+                             </div>
+                           </div>
+                         </div>
+                         <button type="button" onclick="closeAdminDashboard(); openProfile(${u.id}, '${escapeHtml(u.name).replace(/'/g, "\\'")}');"
+                           class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-emerald-50 border border-gray-200 text-emerald-700 text-[11px] font-semibold cursor-pointer whitespace-nowrap transition">
+                           Профайл →
+                         </button>
+                       </div>`;
+                   }).join("")}
+                 </div>`
+            }
+          </div>
+        </div>
+      `;
+    }
+
     document.addEventListener("keydown", e => {
-      if (e.key === "Escape") { closeModal(); closeSettings(); closeComments(); closeProfile(); closeSharedListing(); }
+      if (e.key === "Escape") { closeModal(); closeSettings(); closeComments(); closeProfile(); closeSharedListing(); closeAdminDashboard(); }
     });
 
     updateAppView();
