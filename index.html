@@ -4,9 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Бүрэгхангай Зар - Сумын нэгдсэн мэдээллийн самбар</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏔️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     @media (max-width: 768px) {
@@ -14,19 +19,24 @@
     }
   </style>
 </head>
-<body class="text-gray-800 pb-16 font-sans min-h-screen overflow-x-hidden" style="background-image: url('bg2.jpg'); background-size: cover; background-attachment: fixed; background-position: center;">
+<body class="text-gray-800 pb-24 sm:pb-16 min-h-screen overflow-x-hidden" style="background-image: url('bg2.jpg'); background-size: cover; background-attachment: fixed; background-position: center;">
   <div class="fixed inset-0 bg-black/10 -z-10 pointer-events-none"></div>
 
   <!-- 1. Толгой хэсэг (Header) -->
-  <header class="bg-emerald-700 text-white sticky top-0 z-10 shadow-md">
-    <div class="max-w-4xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex flex-wrap justify-between items-center gap-2 sm:gap-3">
-      <div>
-        <h1 class="text-lg sm:text-xl font-bold tracking-tight">БҮРЭГХАНГАЙ ЗАР</h1>
-        <p class="text-[11px] sm:text-xs text-emerald-200">Сумын нэгдсэн мэдээллийн самбар</p>
+  <header class="bg-emerald-800/95 backdrop-blur-md text-white sticky top-0 z-10 shadow-lg border-b border-emerald-600/30">
+    <div class="max-w-4xl mx-auto px-3 sm:px-5 py-3 sm:py-3.5 flex flex-wrap justify-between items-center gap-2.5 sm:gap-3">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-700/80 border border-emerald-500/40 flex items-center justify-center text-lg sm:text-xl shadow-inner">
+          🏔️
+        </div>
+        <div>
+          <h1 class="text-base sm:text-xl font-extrabold tracking-tight leading-tight">БҮРЭГХАНГАЙ ЗАР</h1>
+          <p class="text-[11px] sm:text-xs text-emerald-200/90">Сумын нэгдсэн мэдээллийн самбар</p>
+        </div>
       </div>
       <div id="headerActions" class="hidden flex-wrap items-center justify-between sm:justify-end gap-1.5 sm:gap-2 w-full sm:w-auto">
         <div id="authArea" class="flex items-center gap-1.5 sm:gap-2"></div>
-        <button onclick="openModal()" class="bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm shadow transition cursor-pointer whitespace-nowrap">
+        <button onclick="openModal()" class="bg-amber-400 hover:bg-amber-300 active:scale-95 text-gray-900 font-bold px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm shadow-md transition cursor-pointer whitespace-nowrap">
           + Зар оруулах
         </button>
       </div>
@@ -36,10 +46,13 @@
   <!-- 2. Нэвтрэх / Бүртгүүлэх дэлгэц -->
   <section id="authGate" class="fixed inset-0 flex items-center justify-center px-3 sm:px-4 py-6 z-20 overflow-y-auto" style="background-image: url('bg.jpg'); background-size: cover; background-position: center;">
     <div class="absolute inset-0 bg-black/20"></div>
-    <div class="relative bg-white/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 shadow-2xl border border-white/60 w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <div class="relative bg-white/95 rounded-3xl p-5 sm:p-7 shadow-2xl border border-white w-full max-w-md max-h-[90vh] overflow-y-auto">
       <div class="text-center mb-5">
-        <h2 class="text-xl font-bold text-gray-900">🏔️ Бүрэгхангай Зар</h2>
-        <p class="text-sm text-gray-500 mt-1">Нэвтрэх эсвэл бүртгүүлэхийн тулд утасны дугаараа оруулна уу.</p>
+        <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-2xl shadow-sm">
+          🏔️
+        </div>
+        <h2 class="text-xl font-extrabold text-gray-900">Бүрэгхангай Зар</h2>
+        <p class="text-xs sm:text-sm text-gray-500 mt-1">Нэвтрэх эсвэл бүртгүүлэхийн тулд утасны дугаараа оруулна уу.</p>
       </div>
 
       <!-- Таб -->
@@ -52,35 +65,35 @@
         </button>
       </div>
 
-      <div id="authError" class="hidden mb-3 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-medium"></div>
+      <div id="authError" class="hidden mb-3 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium"></div>
 
       <!-- Нэвтрэх форм — зөвхөн утасны дугаар -->
-      <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-3">
+      <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-3.5">
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Утасны дугаар *</label>
-          <input type="tel" id="loginPhone" required placeholder="88112233"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
+          <label class="block text-xs font-semibold text-gray-700 mb-1.5">Утасны дугаар *</label>
+          <input type="tel" id="loginPhone" required placeholder="88112233" inputmode="numeric"
+            class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition">
         </div>
         <p class="text-[11px] text-gray-400">Бүртгэлтэй утасны дугаараа оруулаад нэвтэрнэ үү.</p>
-        <button type="submit" id="loginSubmitBtn" class="w-full py-2.5 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg transition cursor-pointer">
+        <button type="submit" id="loginSubmitBtn" class="w-full py-2.5 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white rounded-xl shadow-sm transition cursor-pointer">
           Нэвтрэх
         </button>
       </form>
 
       <!-- Бүртгүүлэх форм — нэр + утас -->
-      <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-3 hidden">
+      <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-3.5 hidden">
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Таны нэр *</label>
+          <label class="block text-xs font-semibold text-gray-700 mb-1.5">Таны нэр *</label>
           <input type="text" id="regName" required placeholder="Жишээ: Б.Болд"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
+            class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition">
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Утасны дугаар *</label>
-          <input type="tel" id="regPhone" required placeholder="88112233"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
+          <label class="block text-xs font-semibold text-gray-700 mb-1.5">Утасны дугаар *</label>
+          <input type="tel" id="regPhone" required placeholder="88112233" inputmode="numeric"
+            class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:border-emerald-600 transition">
         </div>
         <p class="text-[11px] text-gray-400">Нэр, утасны дугаар оруулаад бүртгүүлнэ үү. Нууц үг шаардлагагүй.</p>
-        <button type="submit" id="registerSubmitBtn" class="w-full py-2.5 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg transition cursor-pointer">
+        <button type="submit" id="registerSubmitBtn" class="w-full py-2.5 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white rounded-xl shadow-sm transition cursor-pointer">
           Бүртгүүлэх
         </button>
       </form>
@@ -88,71 +101,91 @@
   </section>
 
   <!-- 3. Үндсэн хуудас -->
-  <main id="mainContent" class="max-w-4xl mx-auto px-3 sm:px-4 mt-4 sm:mt-5 hidden">
-    <div class="mb-4 flex gap-2">
-      <input type="text" id="searchInput" oninput="renderListings()"
-        placeholder="Унаа, өвс, алдуул мал хайх..."
-        class="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base rounded-xl border border-gray-300 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
-      <button onclick="loadListings()" title="Шинэчлэх"
-        class="px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 shadow-sm text-sm font-semibold text-emerald-700 whitespace-nowrap cursor-pointer">
+  <main id="mainContent" class="max-w-4xl mx-auto px-3 sm:px-5 mt-4 sm:mt-6 hidden">
+    <!-- Хайлт ба Шинэчлэх -->
+    <div class="mb-3.5 flex gap-2">
+      <div class="relative flex-1">
+        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">🔍</span>
+        <input type="text" id="searchInput" oninput="handleSearchInput()"
+          placeholder="Унаа, өвс, алдуул мал хайх..."
+          class="w-full pl-9 pr-9 py-2.5 sm:py-3 text-sm sm:text-base rounded-xl border border-gray-200 bg-white/95 shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-600 transition">
+        <button type="button" id="clearSearchBtn" onclick="clearSearch()" title="Цэвэрлэх"
+          class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 text-sm font-bold px-1 cursor-pointer">
+          ✕
+        </button>
+      </div>
+      <button onclick="loadListings()" title="Заруудыг шинэчлэх"
+        class="px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-gray-200 bg-white/95 hover:bg-emerald-50 active:scale-95 shadow-md text-sm font-semibold text-emerald-700 whitespace-nowrap cursor-pointer transition">
         ↻<span class="hidden sm:inline"> Шинэчлэх</span>
       </button>
     </div>
 
-    <div id="categoryContainer" class="flex gap-2 overflow-x-auto pb-3 mb-4 no-scrollbar"></div>
-    <div id="listingsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4"></div>
+    <!-- Ангилал -->
+    <div id="categoryContainer" class="flex gap-2 overflow-x-auto pb-2.5 mb-3 no-scrollbar"></div>
+
+    <!-- Тоо ба төлөвийн мөр -->
+    <div id="resultsSummary" class="mb-3 flex items-center justify-between text-xs font-medium"></div>
+
+    <!-- Зарын жагсаалт -->
+    <div id="listingsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4"></div>
+
+    <!-- Гар утсанд зориулсан хурдан товч -->
+    <button onclick="openModal()" aria-label="Зар оруулах"
+      class="sm:hidden fixed bottom-5 right-4 z-30 bg-amber-400 hover:bg-amber-300 active:scale-95 text-gray-900 font-extrabold px-4 py-3 rounded-full shadow-xl border border-amber-300 flex items-center gap-1.5 text-sm cursor-pointer transition">
+      <span>＋</span> Зар нэмэх
+    </button>
   </main>
 
   <!-- 4. Зар оруулах цонх -->
-  <div id="listingModal" onclick="if(event.target === this) closeModal()" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-3 sm:p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-4 sm:p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-bold text-gray-900">Шинэ зар оруулах</h3>
-        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-700 text-xl font-bold cursor-pointer">✕</button>
+  <div id="listingModal" onclick="if(event.target === this) closeModal()" class="fixed inset-0 bg-black/50 backdrop-blur-[1px] z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+        <h3 class="text-lg font-extrabold text-gray-900">📝 Шинэ зар оруулах</h3>
+        <button onclick="closeModal()" class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 text-lg font-bold cursor-pointer transition">✕</button>
       </div>
 
-      <form id="addListingForm" onsubmit="handleAddListing(event)" class="space-y-3">
+      <form id="addListingForm" onsubmit="handleAddListing(event)" class="space-y-3.5">
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Ангилал</label>
-          <select id="newCategory" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
-            <option value="Унаа, тээвэр">Унаа, тээвэр</option>
-            <option value="Мал, ХАА">Мал, ХАА</option>
-            <option value="Худалдаа, наймаа">Худалдаа, наймаа</option>
-            <option value="Ажлын байр">Ажлын байр</option>
-            <option value="Мэдээ, зарлал">Мэдээ, зарлал</option>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Ангилал</label>
+          <select id="newCategory" class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600">
+            <option value="Унаа, тээвэр">🚗 Унаа, тээвэр</option>
+            <option value="Мал, ХАА">🐎 Мал, ХАА</option>
+            <option value="Худалдаа, наймаа">🛒 Худалдаа, наймаа</option>
+            <option value="Ажлын байр">💼 Ажлын байр</option>
+            <option value="Мэдээ, зарлал">📢 Мэдээ, зарлал</option>
           </select>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Зарын гарчиг *</label>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Зарын гарчиг *</label>
           <input type="text" id="newTitle" required placeholder="Жишээ: УБ руу маргааш өглөө явна"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+            class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Дэлгэрэнгүй мэдээлэл</label>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Дэлгэрэнгүй мэдээлэл</label>
           <textarea id="newDescription" rows="3" placeholder="Хэдэн хүн авах, хаанаас хөдлөх гэх мэт..."
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></textarea>
+            class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"></textarea>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Үнэ (Заавал биш)</label>
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Үнэ (Заавал биш)</label>
             <input type="text" id="newPrice" placeholder="35,000"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+              class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-600 mb-1">Утасны дугаар *</label>
-            <input type="tel" id="newPhone" required placeholder="88112233"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+            <label class="block text-xs font-semibold text-gray-700 mb-1">Утасны дугаар *</label>
+            <input type="tel" id="newPhone" required placeholder="88112233" inputmode="numeric"
+              class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Зарын хугацаа</label>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Зарын хугацаа</label>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <select id="newExpiryPreset" onchange="applyExpiryPreset()"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white">
+              class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600">
               <option value="">— Хугацаа сонгох —</option>
               <option value="1">1 өдөр</option>
               <option value="3">3 өдөр</option>
@@ -162,46 +195,49 @@
               <option value="custom">Өөрөө тохируулах</option>
             </select>
             <input type="date" id="newExpiryDate"
-              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600">
+              class="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600">
           </div>
           <p class="text-[11px] text-gray-400 mt-1">Хоосон орхивол 30 хоног идэвхтэй байна.</p>
         </div>
 
-        <div class="flex items-center gap-2 pt-1">
-          <input type="checkbox" id="newIsUrgent" class="w-4 h-4 text-emerald-600 rounded">
-          <label for="newIsUrgent" class="text-xs font-medium text-gray-700">Яаралтай зар (Дээгүүр онцолж харуулах)</label>
-        </div>
+        <label for="newIsUrgent" class="flex items-center gap-2.5 p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80 cursor-pointer">
+          <input type="checkbox" id="newIsUrgent" class="w-4 h-4 accent-amber-500 rounded">
+          <span class="text-xs font-semibold text-amber-900">🔥 Яаралтай зар (Дээгүүр онцолж харуулах)</span>
+        </label>
 
-        <div id="listingError" class="hidden p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs font-medium"></div>
+        <div id="listingError" class="hidden p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium"></div>
 
-        <div class="pt-3 flex gap-2 justify-end">
-          <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg cursor-pointer">Болих</button>
-          <button type="submit" id="listingSubmitBtn" class="px-5 py-2 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg cursor-pointer">Нийтлэх</button>
+        <div class="pt-3 flex gap-2 justify-end border-t border-gray-100">
+          <button type="button" onclick="closeModal()" class="px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-xl cursor-pointer transition">Болих</button>
+          <button type="submit" id="listingSubmitBtn" class="px-5 py-2.5 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white rounded-xl shadow-sm cursor-pointer transition">Нийтлэх</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- 5. Нэр солих цонх (Settings) -->
-  <div id="settingsModal" onclick="if(event.target === this) closeSettings()" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-3 sm:p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-4 sm:p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-bold text-gray-900">⚙️ Тохиргоо</h3>
-        <button onclick="closeSettings()" class="text-gray-400 hover:text-gray-700 text-xl font-bold cursor-pointer">✕</button>
+  <div id="settingsModal" onclick="if(event.target === this) closeSettings()" class="fixed inset-0 bg-black/50 backdrop-blur-[1px] z-50 hidden items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
+        <h3 class="text-lg font-extrabold text-gray-900">⚙️ Тохиргоо</h3>
+        <button onclick="closeSettings()" class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 text-lg font-bold cursor-pointer transition">✕</button>
       </div>
-      <div id="settingsMsg" class="hidden mb-3 p-3 rounded-lg text-xs font-medium"></div>
-      <form id="changeNameForm" onsubmit="handleChangeName(event)" class="space-y-3">
+      <div id="settingsMsg" class="hidden mb-3 p-3 rounded-xl text-xs font-medium"></div>
+      <form id="changeNameForm" onsubmit="handleChangeName(event)" class="space-y-3.5">
         <div>
-          <label class="block text-xs font-semibold text-gray-600 mb-1">Шинэ нэр *</label>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Шинэ нэр *</label>
           <input type="text" id="newDisplayName" required placeholder="Жишээ: Б.Болд"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
+            class="w-full border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600">
         </div>
-        <button type="submit" id="changeNameBtn" class="w-full py-2.5 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg transition cursor-pointer">
+        <button type="submit" id="changeNameBtn" class="w-full py-2.5 text-sm font-bold bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white rounded-xl shadow-sm transition cursor-pointer">
           Нэр хадгалах
         </button>
       </form>
     </div>
   </div>
+
+  <!-- 6. Мэдэгдэл (Toast) -->
+  <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] hidden items-center gap-2 bg-gray-900/95 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-full shadow-xl pointer-events-none"></div>
 
   <script>
     const SUPABASE_URL = "https://ixsnccckocqulywctvlv.supabase.co";
@@ -213,6 +249,15 @@
     const sb = isCloudEnabled ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
     const CATEGORIES = ["Бүгд", "Унаа, тээвэр", "Мал, ХАА", "Худалдаа, наймаа", "Ажлын байр", "Мэдээ, зарлал"];
+    const CATEGORY_META = {
+      "Бүгд": { icon: "📋", badge: "bg-gray-100 text-gray-800" },
+      "Унаа, тээвэр": { icon: "🚗", badge: "bg-sky-100 text-sky-800" },
+      "Мал, ХАА": { icon: "🐎", badge: "bg-emerald-100 text-emerald-800" },
+      "Худалдаа, наймаа": { icon: "🛒", badge: "bg-violet-100 text-violet-800" },
+      "Ажлын байр": { icon: "💼", badge: "bg-amber-100 text-amber-800" },
+      "Мэдээ, зарлал": { icon: "📢", badge: "bg-rose-100 text-rose-800" },
+      "Миний зарууд": { icon: "📌", badge: "bg-emerald-100 text-emerald-800" }
+    };
     const STORAGE_KEYS = {
       listings: "buregkhangai_listings",
       users: "buregkhangai_users",
@@ -220,6 +265,7 @@
     };
 
     let selectedCategory = "Бүгд";
+    let toastTimer = null;
 
     const DEFAULT_LISTINGS = [
       {
@@ -255,6 +301,27 @@
       return String(text ?? "")
         .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.remove("hidden");
+      el.classList.add("flex");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        el.classList.add("hidden");
+        el.classList.remove("flex");
+      }, 2600);
+    }
+
+    async function copyPhone(phone) {
+      try {
+        await navigator.clipboard.writeText(phone);
+        showToast(`📋 ${phone} дугаарыг хууллаа`);
+      } catch {
+        showToast(`📞 Утас: ${phone}`);
+      }
     }
 
     function formatTimeAgo(isoOrText) {
@@ -304,7 +371,21 @@
       const diffDays = Math.ceil((new Date(expiresAt) - Date.now()) / 86400000);
       if (diffDays <= 0) return "⚠️ Өнөөдөр дуусна";
       if (diffDays === 1) return "⚠️ Маргааш дуусна";
-      return `📅 ${diffDays} өдөр үлдсэн`;
+      return `📅 ${diffDays} өдөр`;
+    }
+
+    function handleSearchInput() {
+      const input = document.getElementById("searchInput");
+      document.getElementById("clearSearchBtn").classList.toggle("hidden", !input.value);
+      renderListings();
+    }
+
+    function clearSearch() {
+      const input = document.getElementById("searchInput");
+      input.value = "";
+      document.getElementById("clearSearchBtn").classList.add("hidden");
+      renderListings();
+      input.focus();
     }
 
     // ── Auth ─────────────────────────────────────────────────
@@ -420,6 +501,7 @@
       closeModal(); closeSettings();
       document.getElementById("addListingForm").reset();
       document.getElementById("searchInput").value = "";
+      document.getElementById("clearSearchBtn").classList.add("hidden");
       selectedCategory = "Бүгд";
       updateAppView();
     }
@@ -438,17 +520,17 @@
         headerActions.classList.add("flex");
 
         authArea.innerHTML = `
-          <span class="text-xs sm:text-sm bg-emerald-800/80 border border-emerald-500/40 px-2.5 sm:px-3 py-1.5 rounded-lg font-medium inline-flex items-center gap-1.5">
+          <span class="text-xs sm:text-sm bg-emerald-900/60 border border-emerald-500/40 px-2.5 sm:px-3 py-1.5 rounded-xl font-medium inline-flex items-center gap-1.5">
             <span>👤</span>
-            <span class="max-w-[110px] sm:max-w-[180px] truncate">${escapeHtml(currentUser.name)}</span>
-            ${currentUser.isAdmin ? '<span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-amber-400 text-gray-900">Админ</span>' : ''}
+            <span class="max-w-[100px] sm:max-w-[180px] truncate">${escapeHtml(currentUser.name)}</span>
+            ${currentUser.isAdmin ? '<span class="px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-amber-400 text-gray-900">Админ</span>' : ''}
           </span>
           <button onclick="openSettings()" title="Тохиргоо"
-            class="text-xs sm:text-sm bg-emerald-800 hover:bg-emerald-900 text-emerald-100 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg transition cursor-pointer">
+            class="text-xs sm:text-sm bg-emerald-900/60 hover:bg-emerald-900 text-emerald-100 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl transition cursor-pointer">
             ⚙️
           </button>
           <button onclick="logout()"
-            class="text-xs sm:text-sm bg-emerald-800 hover:bg-emerald-900 text-emerald-100 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg transition cursor-pointer whitespace-nowrap">
+            class="text-xs sm:text-sm bg-emerald-900/60 hover:bg-emerald-900 text-emerald-100 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl transition cursor-pointer whitespace-nowrap">
             Гарах
           </button>
         `;
@@ -471,6 +553,7 @@
       hideSettingsMsg();
       const m = document.getElementById("settingsModal");
       m.classList.remove("hidden"); m.classList.add("flex");
+      setTimeout(() => document.getElementById("newDisplayName").focus(), 50);
     }
 
     function closeSettings() {
@@ -481,7 +564,7 @@
     function showSettingsMsg(msg, isSuccess) {
       const el = document.getElementById("settingsMsg");
       el.textContent = msg;
-      el.className = `mb-3 p-3 rounded-lg text-xs font-medium ${isSuccess ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`;
+      el.className = `mb-3 p-3 rounded-xl text-xs font-medium ${isSuccess ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`;
       el.classList.remove("hidden");
     }
     function hideSettingsMsg() {
@@ -500,7 +583,7 @@
 
       try {
         if (sb) {
-          const { data, error } = await sb.rpc("change_name", {
+          const { error } = await sb.rpc("change_name", {
             p_user_id: currentUser.id, p_new_name: newName
           });
           if (error) { showSettingsMsg(`Алдаа гарлаа: ${error.message}`, false); return; }
@@ -512,45 +595,86 @@
         localStorage.setItem(STORAGE_KEYS.currentUser, JSON.stringify(currentUser));
         showSettingsMsg("✅ Нэр амжилттай солигдлоо!", true);
         updateAppView();
+        showToast("✅ Нэр шинэчлэгдлээ");
       } finally {
         btn.disabled = false; btn.textContent = "Нэр хадгалах";
       }
     }
 
     // ── Listings ─────────────────────────────────────────────
+    function renderLoadingSkeletons() {
+      const container = document.getElementById("listingsContainer");
+      container.innerHTML = Array.from({ length: 4 }, () => `
+        <div class="p-4 rounded-2xl bg-white shadow-md border border-gray-100 animate-pulse space-y-3">
+          <div class="flex justify-between">
+            <div class="h-5 w-24 bg-gray-200 rounded-lg"></div>
+            <div class="h-4 w-16 bg-gray-200 rounded"></div>
+          </div>
+          <div class="h-5 w-3/4 bg-gray-200 rounded"></div>
+          <div class="space-y-1.5">
+            <div class="h-3.5 w-full bg-gray-100 rounded"></div>
+            <div class="h-3.5 w-5/6 bg-gray-100 rounded"></div>
+          </div>
+          <div class="pt-3 border-t border-gray-100 flex justify-between items-center">
+            <div class="h-5 w-20 bg-gray-200 rounded"></div>
+            <div class="h-9 w-28 bg-gray-200 rounded-xl"></div>
+          </div>
+        </div>
+      `).join("");
+    }
+
     async function loadListings() {
       if (!currentUser) return;
       const container = document.getElementById("listingsContainer");
 
       if (sb) {
-        container.innerHTML = `<div class="col-span-full text-center py-10 bg-white rounded-xl text-gray-500">Заруудыг ачаалж байна...</div>`;
+        renderLoadingSkeletons();
         const { data, error } = await sb.from("listings").select("*")
           .order("is_pinned", { ascending: false })
           .order("created_at", { ascending: false });
 
         if (error) {
-          container.innerHTML = `<div class="col-span-full text-center py-10 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">Алдаа: ${escapeHtml(error.message)}</div>`;
+          container.innerHTML = `<div class="col-span-full text-center py-10 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm">Алдаа: ${escapeHtml(error.message)}</div>`;
           return;
         }
         listings = (data || []).map(normalizeListingRow);
       } else {
         listings = JSON.parse(localStorage.getItem(STORAGE_KEYS.listings)) || DEFAULT_LISTINGS;
       }
+      renderCategories();
       renderListings();
+    }
+
+    function getVisibleCount(cat) {
+      if (!currentUser) return 0;
+      return listings.filter(item => {
+        const canDelete = item.authorId === currentUser.id || Boolean(currentUser.isAdmin);
+        if (isExpired(item.expiresAt) && !canDelete) return false;
+        if (cat === "Бүгд") return true;
+        if (cat === "Миний зарууд") return item.authorId === currentUser.id;
+        return item.category === cat;
+      }).length;
     }
 
     function renderCategories() {
       const container = document.getElementById("categoryContainer");
-      container.innerHTML = [...CATEGORIES, "Миний зарууд"].map(cat => `
-        <button onclick="selectCategory('${cat}')"
-          class="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition cursor-pointer ${
-            selectedCategory === cat
-              ? 'bg-emerald-700 text-white shadow'
-              : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-          }">
-          ${cat}
-        </button>
-      `).join("");
+      container.innerHTML = [...CATEGORIES, "Миний зарууд"].map(cat => {
+        const meta = CATEGORY_META[cat] || { icon: "🏷️" };
+        const count = getVisibleCount(cat);
+        const isActive = selectedCategory === cat;
+        return `
+          <button onclick="selectCategory('${cat}')"
+            class="px-3.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition cursor-pointer inline-flex items-center gap-1.5 shadow-sm ${
+              isActive
+                ? 'bg-emerald-700 text-white shadow-md ring-2 ring-emerald-400/50'
+                : 'bg-white/95 text-gray-700 border border-gray-200 hover:bg-emerald-50'
+            }">
+            <span>${meta.icon}</span>
+            <span>${cat}</span>
+            <span class="px-1.5 py-0.5 text-[10px] rounded-full ${isActive ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-600'}">${count}</span>
+          </button>
+        `;
+      }).join("");
     }
 
     function selectCategory(cat) {
@@ -562,53 +686,78 @@
     function renderListings() {
       if (!currentUser) return;
       const container = document.getElementById("listingsContainer");
-      const q = document.getElementById("searchInput").value.toLowerCase();
+      const summary = document.getElementById("resultsSummary");
+      const q = document.getElementById("searchInput").value.trim().toLowerCase();
 
       const filtered = listings.filter(item => {
         const matchCat = selectedCategory === "Бүгд"
           || (selectedCategory === "Миний зарууд" && item.authorId === currentUser.id)
           || item.category === selectedCategory;
-        const matchSearch = (item.title || "").toLowerCase().includes(q)
-          || (item.description || "").toLowerCase().includes(q);
+        const matchSearch = !q
+          || (item.title || "").toLowerCase().includes(q)
+          || (item.description || "").toLowerCase().includes(q)
+          || (item.phone || "").toLowerCase().includes(q);
         const canDelete = item.authorId === currentUser.id || Boolean(currentUser.isAdmin);
         return matchCat && matchSearch && (!isExpired(item.expiresAt) || canDelete);
       });
 
       filtered.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
 
+      summary.innerHTML = `
+        <span class="inline-flex items-center gap-1.5 bg-white/90 text-gray-700 px-3 py-1 rounded-full shadow-sm border border-white">
+          <span>Нийт <strong>${filtered.length}</strong> зар</span>
+          ${q ? `<span class="text-emerald-700">• "${escapeHtml(q)}"</span>` : ''}
+        </span>
+      `;
+
       if (filtered.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-center py-10 bg-white rounded-xl text-gray-500">Тохирох зар олдсонгүй.</div>`;
+        container.innerHTML = `
+          <div class="col-span-full text-center py-12 px-4 bg-white/95 rounded-2xl shadow-md border border-gray-100">
+            <div class="text-3xl mb-2">📭</div>
+            <p class="text-sm font-semibold text-gray-700">Тохирох зар олдсонгүй</p>
+            <p class="text-xs text-gray-400 mt-1">Хайлтын үгээ өөрчлөх эсвэл шинэ зар нэмнэ үү.</p>
+          </div>`;
         return;
       }
 
       container.innerHTML = filtered.map(item => {
         const canDelete = item.authorId === currentUser.id || Boolean(currentUser.isAdmin);
+        const meta = CATEGORY_META[item.category] || { icon: "🏷️", badge: "bg-emerald-100 text-emerald-800" };
+        const expiryText = formatExpiry(item.expiresAt);
         return `
-          <div class="p-3.5 sm:p-4 rounded-xl bg-white shadow-md ${item.isPinned ? 'border-2 border-amber-400 ring-1 ring-amber-200' : 'border border-gray-200'} flex flex-col justify-between">
+          <article class="p-4 rounded-2xl bg-white shadow-md hover:shadow-lg transition-all duration-200 ${item.isPinned ? 'border-2 border-amber-400 ring-1 ring-amber-200' : 'border border-gray-200/90'} flex flex-col justify-between">
             <div>
-              <div class="flex justify-between items-start gap-2 mb-1">
-                <span class="text-xs font-semibold px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800 whitespace-nowrap">${escapeHtml(item.category)}</span>
-                <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-end">
-                  ${item.isPinned ? '<span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500 text-white">Яаралтай</span>' : ''}
-                  <span class="text-xs text-gray-400">${escapeHtml(item.createdAt)}</span>
-                  ${item.expiresAt ? `<span class="text-xs font-medium ${isExpired(item.expiresAt) ? 'text-red-500' : 'text-blue-500'}">${formatExpiry(item.expiresAt)}</span>` : ''}
-                  ${canDelete ? `<button onclick="deleteListing(${item.id})" title="Устгах" class="text-xs text-gray-400 hover:text-red-600 ml-1 cursor-pointer">✕</button>` : ''}
+              <div class="flex justify-between items-start gap-2 mb-2">
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-lg ${meta.badge} whitespace-nowrap inline-flex items-center gap-1">
+                  <span>${meta.icon}</span> ${escapeHtml(item.category)}
+                </span>
+                <div class="flex items-center gap-1.5 flex-wrap justify-end">
+                  ${item.isPinned ? '<span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-500 text-white shadow-sm">🔥 Яаралтай</span>' : ''}
+                  <span class="text-[11px] text-gray-400">${escapeHtml(item.createdAt)}</span>
+                  ${expiryText ? `<span class="text-[11px] font-medium px-1.5 py-0.5 rounded ${isExpired(item.expiresAt) ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}">${expiryText}</span>` : ''}
+                  ${canDelete ? `<button onclick="deleteListing(${item.id})" title="Устгах" class="w-6 h-6 rounded-md flex items-center justify-center text-xs text-gray-400 hover:text-red-600 hover:bg-red-50 cursor-pointer transition">✕</button>` : ''}
                 </div>
               </div>
-              <h2 class="text-sm sm:text-base font-bold text-gray-900 mt-1 break-words">${escapeHtml(item.title)}</h2>
-              <p class="text-xs sm:text-sm text-gray-600 mt-1 leading-relaxed break-words">${escapeHtml(item.description)}</p>
+              <h2 class="text-sm sm:text-base font-bold text-gray-900 leading-snug break-words">${escapeHtml(item.title)}</h2>
+              ${item.description ? `<p class="text-xs sm:text-sm text-gray-600 mt-1.5 leading-relaxed whitespace-pre-line break-words">${escapeHtml(item.description)}</p>` : ''}
             </div>
             <div class="mt-4 pt-3 border-t border-gray-100 flex flex-wrap justify-between items-center gap-2">
               <div class="min-w-0">
-                <span class="font-bold text-emerald-700 text-sm sm:text-base">${escapeHtml(item.price)}</span>
-                <span class="block text-xs text-gray-400 truncate">Нийтэлсэн: ${escapeHtml(item.authorName || "Хэрэглэгч")}</span>
+                <span class="font-extrabold text-emerald-700 text-sm sm:text-base">${escapeHtml(item.price)}</span>
+                <span class="block text-[11px] text-gray-400 truncate">👤 ${escapeHtml(item.authorName || "Хэрэглэгч")}</span>
               </div>
-              <a href="tel:+976${escapeHtml(item.phone)}"
-                class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 rounded-lg transition whitespace-nowrap">
-                📞 ${escapeHtml(item.phone)}
-              </a>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="copyPhone('${escapeHtml(item.phone)}')" title="Дугаар хуулах"
+                  class="px-2.5 py-2 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-600 text-xs font-semibold cursor-pointer transition">
+                  📋
+                </button>
+                <a href="tel:+976${escapeHtml(item.phone)}"
+                  class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl shadow-sm transition whitespace-nowrap">
+                  📞 ${escapeHtml(item.phone)}
+                </a>
+              </div>
             </div>
-          </div>`;
+          </article>`;
       }).join("");
     }
 
@@ -663,7 +812,9 @@
 
         document.getElementById("addListingForm").reset();
         closeModal();
+        renderCategories();
         renderListings();
+        showToast("✅ Зар амжилттай нийтлэгдлээ!");
       } finally {
         btn.disabled = false; btn.textContent = "Нийтлэх";
       }
@@ -679,14 +830,16 @@
         const { data, error } = await sb.rpc("delete_own_listing", {
           p_listing_id: id, p_author_id: currentUser.id
         });
-        if (error || !data) { alert("Зар устгахад алдаа гарлаа."); return; }
+        if (error || !data) { showToast("❌ Зар устгахад алдаа гарлаа."); return; }
       } else {
         localStorage.setItem(STORAGE_KEYS.listings, JSON.stringify(
           listings.filter(item => item.id !== id)
         ));
       }
       listings = listings.filter(item => item.id !== id);
+      renderCategories();
       renderListings();
+      showToast("🗑️ Зар устгагдлаа");
     }
 
     function openModal() {
@@ -696,6 +849,7 @@
       if (!phoneField.value) phoneField.value = currentUser.phone;
       const m = document.getElementById("listingModal");
       m.classList.remove("hidden"); m.classList.add("flex");
+      setTimeout(() => document.getElementById("newTitle").focus(), 50);
     }
 
     function closeModal() {
